@@ -1,0 +1,36 @@
+{
+    "disease": "diabetes_clinical",
+    "tier": "Tier 2 - Clinical Lab Screening",
+    "model_type": "XGBoost_Calibrated",
+    "trained_date": "2026-09-27",
+    "random_state": 42,
+    "features_order": [
+        "Pregnancies",
+        "Glucose",
+        "BloodPressure",
+        "SkinThickness",
+        "Insulin",
+        "BMI",
+        "DiabetesPedigreeFunction",
+        "Age"
+    ],
+    "optimal_threshold": 0.2645,
+    "metrics": {
+        "test_roc_auc": 0.8377,
+        "test_recall": 0.7317
+    },
+    "risk_levels": {
+        "low": [
+            0.0,
+            0.1851
+        ],
+        "medium": [
+            0.1851,
+            0.3967
+        ],
+        "high": [
+            0.3967,
+            1.0
+        ]
+    }
+}

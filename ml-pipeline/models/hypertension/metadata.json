@@ -1,0 +1,57 @@
+{
+    "disease": "hypertension",
+    "target_column": "HighBP",
+    "model_type": "XGBoost_Optuna_Tuned",
+    "trained_date": "2026-09-27",
+    "random_state": 42,
+    "features_order": [
+        "Diabetes_binary",
+        "HighChol",
+        "CholCheck",
+        "BMI",
+        "Smoker",
+        "Stroke",
+        "HeartDiseaseorAttack",
+        "PhysActivity",
+        "Fruits",
+        "Veggies",
+        "HvyAlcoholConsump",
+        "AnyHealthcare",
+        "NoDocbcCost",
+        "GenHlth",
+        "MentHlth",
+        "PhysHlth",
+        "DiffWalk",
+        "Sex",
+        "Age",
+        "Education",
+        "Income"
+    ],
+    "optimal_threshold": 0.4813,
+    "hyperparameters": {
+        "n_estimators": 100,
+        "max_depth": 4,
+        "learning_rate": 0.11180008173996372,
+        "subsample": 0.7244635724655002,
+        "colsample_bytree": 0.7172738725570936,
+        "min_child_weight": 5
+    },
+    "metrics": {
+        "test_roc_auc": 0.8044,
+        "test_recall": 0.6966
+    },
+    "risk_levels": {
+        "low": [
+            0.0,
+            0.3369
+        ],
+        "medium": [
+            0.3369,
+            0.722
+        ],
+        "high": [
+            0.722,
+            1.0
+        ]
+    }
+}

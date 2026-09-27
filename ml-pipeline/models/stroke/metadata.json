@@ -1,0 +1,49 @@
+{
+    "disease": "stroke",
+    "target_column": "Stroke",
+    "model_type": "XGBoost_Calibrated",
+    "trained_date": "2026-09-27",
+    "random_state": 42,
+    "features_order": [
+        "Diabetes_binary",
+        "HighBP",
+        "HighChol",
+        "CholCheck",
+        "BMI",
+        "Smoker",
+        "HeartDiseaseorAttack",
+        "PhysActivity",
+        "Fruits",
+        "Veggies",
+        "HvyAlcoholConsump",
+        "AnyHealthcare",
+        "NoDocbcCost",
+        "GenHlth",
+        "MentHlth",
+        "PhysHlth",
+        "DiffWalk",
+        "Sex",
+        "Age",
+        "Education",
+        "Income"
+    ],
+    "optimal_threshold": 0.0367,
+    "metrics": {
+        "test_roc_auc": 0.8167,
+        "test_recall": 0.7976
+    },
+    "risk_levels": {
+        "low": [
+            0.0,
+            0.0257
+        ],
+        "medium": [
+            0.0257,
+            0.0551
+        ],
+        "high": [
+            0.0551,
+            1.0
+        ]
+    }
+}

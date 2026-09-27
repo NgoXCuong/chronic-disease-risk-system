@@ -1,0 +1,56 @@
+{
+    "disease": "diabetes_binary",
+    "model_type": "XGBoost_Calibrated",
+    "trained_date": "2026-09-27",
+    "random_state": 42,
+    "features_order": [
+        "HighBP",
+        "HighChol",
+        "CholCheck",
+        "BMI",
+        "Smoker",
+        "Stroke",
+        "HeartDiseaseorAttack",
+        "PhysActivity",
+        "Fruits",
+        "Veggies",
+        "HvyAlcoholConsump",
+        "AnyHealthcare",
+        "NoDocbcCost",
+        "GenHlth",
+        "MentHlth",
+        "PhysHlth",
+        "DiffWalk",
+        "Sex",
+        "Age",
+        "Education",
+        "Income"
+    ],
+    "optimal_threshold": 0.105,
+    "metrics": {
+        "test_roc_auc": 0.8373,
+        "test_recall": 0.8503
+    },
+    "risk_levels": {
+        "low": [
+            0.0,
+            0.0735
+        ],
+        "medium": [
+            0.0735,
+            0.1574
+        ],
+        "high": [
+            0.1574,
+            1.0
+        ]
+    },
+    "hyperparameters": {
+        "n_estimators": 103,
+        "max_depth": 3,
+        "learning_rate": 0.0861666884352914,
+        "subsample": 0.6995779135100955,
+        "colsample_bytree": 0.6372333299626387,
+        "min_child_weight": 5
+    }
+}

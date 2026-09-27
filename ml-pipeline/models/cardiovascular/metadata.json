@@ -1,0 +1,57 @@
+{
+    "disease": "cardiovascular",
+    "target_column": "HeartDiseaseorAttack",
+    "model_type": "XGBoost_Optuna_Tuned",
+    "trained_date": "2026-09-27",
+    "random_state": 42,
+    "features_order": [
+        "Diabetes_binary",
+        "HighBP",
+        "HighChol",
+        "CholCheck",
+        "BMI",
+        "Smoker",
+        "Stroke",
+        "PhysActivity",
+        "Fruits",
+        "Veggies",
+        "HvyAlcoholConsump",
+        "AnyHealthcare",
+        "NoDocbcCost",
+        "GenHlth",
+        "MentHlth",
+        "PhysHlth",
+        "DiffWalk",
+        "Sex",
+        "Age",
+        "Education",
+        "Income"
+    ],
+    "optimal_threshold": 0.0911,
+    "hyperparameters": {
+        "n_estimators": 111,
+        "max_depth": 5,
+        "learning_rate": 0.03814752033356675,
+        "subsample": 0.9917702367090978,
+        "colsample_bytree": 0.6021766112339514,
+        "min_child_weight": 5
+    },
+    "metrics": {
+        "test_roc_auc": 0.8425,
+        "test_recall": 0.81
+    },
+    "risk_levels": {
+        "low": [
+            0.0,
+            0.0638
+        ],
+        "medium": [
+            0.0638,
+            0.1367
+        ],
+        "high": [
+            0.1367,
+            1.0
+        ]
+    }
+}
