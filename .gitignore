@@ -1,0 +1,57 @@
+# ==========================================
+# GITIGNORE: CHRONIC DISEASE RISK SYSTEM
+# ==========================================
+
+# --- Environment & Secrets ---
+.env
+.env.*
+!.env.example
+venv/
+env/
+ENV/
+.venv/
+
+# --- Python & ML Caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# --- Datasets & Heavy ML Artifacts ---
+# Tuyệt đối không commit dataset lớn lên Git
+ml-pipeline/data/raw/*.csv
+ml-pipeline/data/raw/*.parquet
+ml-pipeline/data/raw/*.zip
+ml-pipeline/data/processed/*.csv
+ml-pipeline/data/processed/*.parquet
+!ml-pipeline/data/raw/.gitkeep
+!ml-pipeline/data/processed/.gitkeep
+
+# Model weights & binaries (lưu trên Drive/Colab hoặc S3)
+ml-pipeline/models/**/*.joblib
+ml-pipeline/models/**/*.pkl
+ml-pipeline/models/**/*.bin
+!ml-pipeline/models/**/.gitkeep
+
+# --- Node.js & Frontend ---
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# --- IDEs & OS Files ---
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
