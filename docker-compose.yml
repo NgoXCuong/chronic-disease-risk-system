@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # 1. DATABASE SERVICE: POSTGRESQL 16
+  # =========================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: chronic_disease_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_DB: ${POSTGRES_DB:-chronic_disease_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-chronic_disease_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chronic_network
+
+  # =========================================================================
+  # 2. BACKEND API SERVICE: FASTAPI (PYTHON 3.11)
+  # (Sẵn sàng khởi chạy khi hoàn thiện Dockerfile ở Sprint 22)
+  # =========================================================================
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: chronic_disease_backend
+  #   restart: unless-stopped
+  #   environment:
+  #     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres123}@db:5432/${POSTGRES_DB:-chronic_disease_db}
+  #     - SECRET_KEY=${SECRET_KEY:-supersecretjwtkey_chronic_disease_2026}
+  #     - ENVIRONMENT=development
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   networks:
+  #     - chronic_network
+
+  # =========================================================================
+  # 3. FRONTEND WEB SERVICE: NEXT.JS 14
+  # (Sẵn sàng khởi chạy khi hoàn thiện Dockerfile ở Sprint 22)
+  # =========================================================================
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: chronic_disease_frontend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - chronic_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  chronic_network:
+    driver: bridge
