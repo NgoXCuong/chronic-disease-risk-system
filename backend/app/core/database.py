@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from app.core.config import settings
 
-# Create Async Engine for PostgreSQL 16
+# Khởi tạo Async Engine kết nối cơ sở dữ liệu PostgreSQL 16
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
@@ -16,7 +16,7 @@ engine = create_async_engine(
     pool_timeout=settings.DB_POOL_TIMEOUT,
 )
 
-# Async Session Factory
+# Nhà máy tạo phiên làm việc bất đồng bộ (Async Session Factory)
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
@@ -28,8 +28,8 @@ AsyncSessionLocal = async_sessionmaker(
 
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """
-    FastAPI Dependency that yields an AsyncSession per request
-    and safely handles commits/rollbacks and closing.
+    Dependency của FastAPI cung cấp AsyncSession cho mỗi request,
+    tự động commit khi thành công, rollback khi có lỗi và đóng kết nối an toàn.
     """
     async with AsyncSessionLocal() as session:
         try:

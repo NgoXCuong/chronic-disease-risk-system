@@ -22,7 +22,7 @@ router = APIRouter(prefix="/auth", tags=["1. Xác thực & Tài khoản (Authent
 
 
 def get_client_ip(request: Request) -> str:
-    """Extract client IP from request headers or direct client."""
+    """Trích xuất địa chỉ IP của client từ header HTTP hoặc kết nối mạng trực tiếp."""
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()
@@ -45,7 +45,7 @@ async def register(
     user_agent = request.headers.get("user-agent", "unknown")
     user = await AuthService.register_user(db, req, ip_address, user_agent)
     
-    # Reload with profile
+    # Nạp lại dữ liệu người dùng cùng với hồ sơ bệnh nhân đi kèm
     res = await db.execute(
         select(User).options(selectinload(User.profile)).where(User.id == user.id)
     )

@@ -15,19 +15,19 @@ from app.core.database import get_async_db
 from app.models.enums import UserRole
 from app.models.user import User
 
-# Security Bearer scheme
+# Khởi tạo lược đồ xác thực HTTP Bearer
 bearer_scheme = HTTPBearer(auto_error=True)
 
 
 def hash_password(plain_password: str) -> str:
-    """Securely hash a password using bcrypt with cost factor 12."""
+    """Mã hóa mật khẩu an toàn bằng thuật toán bcrypt với hệ số chi phí (cost factor) 12."""
     salt = bcrypt.gensalt(rounds=12)
     hashed = bcrypt.hashpw(plain_password.encode("utf-8"), salt)
     return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against the stored bcrypt hash."""
+    """Xác thực mật khẩu thô đối chiếu với chuỗi hash bcrypt đã lưu trong CSDL."""
     try:
         return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
     except Exception:
@@ -35,12 +35,12 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def hash_token(token: str) -> str:
-    """Compute SHA-256 hash of a JWT string for secure database indexing."""
+    """Tính mã băm SHA-256 của chuỗi JWT để lưu trữ và lập chỉ mục (index) an toàn trong CSDL."""
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
-    """Generate short-lived JWT Access Token (default 15 minutes)."""
+    """Tạo Access Token JWT có thời hạn ngắn (mặc định 15 phút)."""
     to_encode = data.copy()
     now = datetime.now(timezone.utc)
     if expires_delta:
@@ -62,8 +62,8 @@ def create_refresh_token(
     expires_delta: Optional[timedelta] = None
 ) -> tuple[str, str, datetime]:
     """
-    Generate long-lived JWT Refresh Token (default 7 days).
-    Returns (raw_jwt_token, token_sha256_hash, expires_at).
+    Tạo Refresh Token JWT có thời hạn dài (mặc định 7 ngày).
+    Trả về tuple: (mã_token_gốc, mã_băm_sha256, thời_điểm_hết_hạn).
     """
     now = datetime.now(timezone.utc)
     if expires_delta:
@@ -86,7 +86,7 @@ def create_refresh_token(
 
 
 def decode_token(token: str) -> Dict[str, Any]:
-    """Decode and validate signature and expiry of a JWT token."""
+    """Giải mã và kiểm tra tính hợp lệ của chữ ký số cùng thời hạn của token JWT."""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
@@ -109,8 +109,8 @@ async def get_current_user(
     db: AsyncSession = Depends(get_async_db)
 ) -> User:
     """
-    FastAPI Security Dependency:
-    Extracts Bearer token, decodes JWT, verifies user existence and active status.
+    Dependency bảo mật của FastAPI:
+    Trích xuất Bearer token, giải mã payload JWT, xác minh sự tồn tại và trạng thái kích hoạt của người dùng.
     """
     token = credentials.credentials
     payload = decode_token(token)
@@ -160,8 +160,8 @@ async def get_current_user(
 
 def require_roles(allowed_roles: List[UserRole]):
     """
-    Role-Based Access Control (RBAC) Dependency Factory.
-    Ensures current user possesses at least one of the permitted roles.
+    Nhà máy tạo Dependency kiểm soát phân quyền dựa trên vai trò người dùng (RBAC).
+    Đảm bảo người dùng hiện tại sở hữu ít nhất một trong các vai trò được cấp phép.
     """
     async def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in allowed_roles:

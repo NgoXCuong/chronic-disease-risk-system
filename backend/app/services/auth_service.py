@@ -31,7 +31,7 @@ from app.schemas.auth import (
 
 
 class AuthService:
-    """Authentication, JWT Token Lifecycle & Security Business Logic."""
+    """Nghiệp vụ xác thực người dùng, vòng đời mã JWT và kiểm soát an ninh phiên đăng nhập."""
 
     @staticmethod
     async def register_user(
@@ -40,8 +40,8 @@ class AuthService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> User:
-        """Register a new user account with hashed password and initial patient profile."""
-        # 1. Check if email already registered
+        """Đăng ký tài khoản người dùng mới, băm mật khẩu và khởi tạo hồ sơ nhân trắc bệnh nhân."""
+        # 1. Kiểm tra email đã tồn tại trong hệ thống chưa
         existing = await db.execute(select(User).where(User.email == req.email.lower()))
         if existing.scalar_one_or_none():
             raise HTTPException(
@@ -49,10 +49,10 @@ class AuthService:
                 detail=f"Email '{req.email}' đã được đăng ký trên hệ thống. Vui lòng sử dụng email khác hoặc đăng nhập.",
             )
 
-        # 2. Hash password with bcrypt
+        # 2. Băm mật khẩu an toàn với thuật toán bcrypt (cost 12)
         hashed_pwd = hash_password(req.password)
 
-        # 3. Create User entity
+        # 3. Tạo bản ghi thực thể Người dùng (User)
         user = User(
             email=req.email.lower(),
             hashed_password=hashed_pwd,
@@ -63,7 +63,7 @@ class AuthService:
         db.add(user)
         await db.flush()
 
-        # 4. Create associated PatientProfile
+        # 4. Tạo hồ sơ bệnh nhân đi kèm (PatientProfile)
         profile = PatientProfile(
             user_id=user.id,
             full_name=req.full_name,
@@ -75,7 +75,7 @@ class AuthService:
         )
         db.add(profile)
 
-        # 5. Log audit trail
+        # 5. Ghi nhật ký kiểm toán hệ thống (Audit Trail)
         audit = SystemAuditLog(
             user_id=user.id,
             action="AUTH_REGISTER",
@@ -98,15 +98,15 @@ class AuthService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> TokenResponse:
-        """Authenticate user credentials and issue Access Token + Refresh Token."""
-        # 1. Fetch user by email
+        """Xác thực thông tin đăng nhập và cấp cặp khóa Access Token + Refresh Token."""
+        # 1. Truy vấn người dùng theo email
         result = await db.execute(
             select(User).options(selectinload(User.profile)).where(User.email == req.email.lower())
         )
         user = result.scalar_one_or_none()
 
         if not user or not verify_password(req.password, user.hashed_password):
-            # Record failed login in audit
+            # Ghi nhận lần đăng nhập thất bại vào nhật ký kiểm toán
             audit = SystemAuditLog(
                 user_id=user.id if user else None,
                 action="AUTH_LOGIN_FAILED",
@@ -131,7 +131,7 @@ class AuthService:
                 detail="Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
             )
 
-        # 2. Generate Access Token (15m) and Refresh Token (7d)
+        # 2. Tạo Access Token (15 phút) và Refresh Token (7 ngày)
         access_token = create_access_token(
             data={"sub": str(user.id), "email": user.email, "role": user.role.value}
         )
@@ -139,7 +139,7 @@ class AuthService:
             user_id=user.id, email=user.email
         )
 
-        # 3. Store Refresh Token hash in DB
+        # 3. Lưu mã băm SHA-256 của Refresh Token vào CSDL để quản lý thu hồi
         auth_token_record = UserAuthToken(
             user_id=user.id,
             token_hash=token_digest,
@@ -151,7 +151,7 @@ class AuthService:
         )
         db.add(auth_token_record)
 
-        # 4. Audit Log
+        # 4. Ghi nhật ký kiểm toán đăng nhập thành công
         audit = SystemAuditLog(
             user_id=user.id,
             action="AUTH_LOGIN_SUCCESS",
@@ -180,13 +180,13 @@ class AuthService:
         user_agent: Optional[str] = None,
     ) -> TokenResponse:
         """
-        Perform strict Refresh Token Rotation:
-        - Validates the incoming refresh token.
-        - If token is already revoked: DETECTS REUSE ATTACK! Revokes all tokens for that user.
-        - Invalidates the used token.
-        - Issues a brand new Access Token and Refresh Token.
+        Thực hiện cơ chế luân chuyển Refresh Token nghiêm ngặt (Refresh Token Rotation):
+        - Kiểm tra chữ ký và tính hợp lệ của refresh token gửi lên.
+        - Nếu token đã bị thu hồi trước đó: PHÁT HIỆN TẤN CÔNG TÁI SỬ DỤNG (Token Reuse Attack)! Hủy toàn bộ phiên làm việc của user.
+        - Đánh dấu token hiện tại là đã thu hồi (revoked).
+        - Cấp phát cặp Access Token mới và Refresh Token hoàn toàn mới.
         """
-        # 1. Decode token structure & signature
+        # 1. Giải mã cấu trúc token và chữ ký
         payload = decode_token(raw_refresh_token)
         if payload.get("type") != "refresh":
             raise HTTPException(
@@ -204,7 +204,7 @@ class AuthService:
         user_uuid = uuid.UUID(user_id_str)
         token_digest = hash_token(raw_refresh_token)
 
-        # 2. Look up token in database
+        # 2. Tra cứu token trong cơ sở dữ liệu
         result = await db.execute(
             select(UserAuthToken).where(
                 UserAuthToken.user_id == user_uuid,
@@ -220,9 +220,9 @@ class AuthService:
                 detail="Refresh token không tìm thấy trong hệ thống hoặc đã bị hủy.",
             )
 
-        # 3. Security Guard: Token Reuse Detection
+        # 3. Lá chắn bảo mật: Phát hiện hành vi sử dụng lại token cũ (Token Reuse Detection)
         if token_record.is_revoked:
-            # Token reuse breach detected! Revoke ALL active tokens for this user!
+            # Phát hiện rò rỉ token! Thu hồi toàn bộ token còn hiệu lực của người dùng này trên mọi thiết bị!
             await db.execute(
                 update(UserAuthToken)
                 .where(
@@ -248,7 +248,7 @@ class AuthService:
                 detail="Cảnh báo an ninh: Phát hiện mã xác thực đã bị sử dụng lại. Toàn bộ phiên làm việc đã bị hủy vì lý do an toàn.",
             )
 
-        # 4. Check expiration
+        # 4. Kiểm tra thời hạn hiệu lực của token
         now = datetime.now(timezone.utc)
         if token_record.expires_at < now:
             token_record.is_revoked = True
@@ -258,10 +258,10 @@ class AuthService:
                 detail="Refresh token đã hết hạn. Vui lòng đăng nhập lại.",
             )
 
-        # 5. Revoke current refresh token
+        # 5. Thu hồi refresh token hiện tại
         token_record.is_revoked = True
 
-        # 6. Fetch user to verify active status
+        # 6. Kiểm tra lại trạng thái tài khoản người dùng
         user_res = await db.execute(select(User).where(User.id == user_uuid))
         user = user_res.scalar_one_or_none()
         if not user or not user.is_active:
@@ -271,7 +271,7 @@ class AuthService:
                 detail="Tài khoản không tồn tại hoặc đã bị khóa.",
             )
 
-        # 7. Issue new Access Token and brand new Refresh Token (Rotation)
+        # 7. Cấp mới cặp Access Token và Refresh Token mới (Rotation)
         new_access_token = create_access_token(
             data={"sub": str(user.id), "email": user.email, "role": user.role.value}
         )
@@ -279,7 +279,7 @@ class AuthService:
             user_id=user.id, email=user.email
         )
 
-        # 8. Save new token hash
+        # 8. Lưu mã băm của Refresh Token mới vào CSDL
         new_token_record = UserAuthToken(
             user_id=user.id,
             token_hash=new_digest,
@@ -308,7 +308,7 @@ class AuthService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> None:
-        """Revoke refresh token on logout and record audit log."""
+        """Thu hồi refresh token khi đăng xuất và ghi vết nhật ký kiểm toán."""
         if raw_refresh_token:
             token_digest = hash_token(raw_refresh_token)
             await db.execute(
@@ -340,17 +340,17 @@ class AuthService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> None:
-        """Verify current password, update to new hash, and revoke all active refresh tokens."""
+        """Xác minh mật khẩu cũ, băm cập nhật mật khẩu mới và hủy toàn bộ refresh token trên các thiết bị."""
         if not verify_password(req.current_password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Mật khẩu hiện tại không chính xác.",
             )
 
-        # Update password hash
+        # Cập nhật mã băm mật khẩu mới
         user.hashed_password = hash_password(req.new_password)
 
-        # Invalidate ALL active refresh tokens on all devices
+        # Hủy toàn bộ refresh token đang hoạt động trên mọi thiết bị
         await db.execute(
             update(UserAuthToken)
             .where(

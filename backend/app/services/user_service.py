@@ -11,11 +11,11 @@ from app.schemas.profile import PatientProfileResponse, PatientProfileUpdate
 
 
 class UserService:
-    """Patient Profile and User Management Business Logic."""
+    """Nghiệp vụ quản lý hồ sơ nhân trắc và thông tin sức khỏe cá nhân của người bệnh."""
 
     @staticmethod
     async def get_patient_profile(db: AsyncSession, user_id: uuid.UUID) -> PatientProfile:
-        """Fetch patient physical profile by user ID."""
+        """Truy vấn hồ sơ chỉ số nhân trắc của bệnh nhân theo ID người dùng."""
         result = await db.execute(
             select(PatientProfile).where(PatientProfile.user_id == user_id)
         )
@@ -33,18 +33,18 @@ class UserService:
         user_id: uuid.UUID,
         req: PatientProfileUpdate
     ) -> PatientProfile:
-        """Update physiological metrics (height, weight, medical history)."""
+        """Cập nhật các chỉ số sinh lý (chiều cao, cân nặng, tiền sử bệnh án)."""
         result = await db.execute(
             select(PatientProfile).where(PatientProfile.user_id == user_id)
         )
         profile = result.scalar_one_or_none()
 
         if not profile:
-            # Create if not exists
+            # Tự động khởi tạo nếu chưa có hồ sơ
             profile = PatientProfile(user_id=user_id)
             db.add(profile)
 
-        # Update provided fields
+        # Cập nhật các trường dữ liệu được gửi lên
         update_data = req.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(profile, key, value)

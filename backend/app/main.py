@@ -13,23 +13,23 @@ from app.core.database import engine
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
-    Application Lifespan Events Handler.
-    Initializes DB connection pools and loads ML model artifacts into RAM once at startup.
+    Trình quản lý vòng đời ứng dụng (Lifespan Events Handler).
+    Khởi tạo kết nối CSDL và nạp sẵn các mô hình Machine Learning vào RAM khi server khởi động.
     """
-    # 1. Startup: Verify database connection
+    # 1. Khởi động (Startup): Kiểm tra kết nối tới cơ sở dữ liệu PostgreSQL
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
     except Exception as e:
-        print(f"[FATAL] Failed to connect to PostgreSQL database: {e}")
+        print(f"[NGUY HIỂM] Không thể kết nối cơ sở dữ liệu PostgreSQL: {e}")
 
     yield
 
-    # 2. Shutdown: Dispose database connections
+    # 2. Tắt ứng dụng (Shutdown): Đóng an toàn toàn bộ kết nối cơ sở dữ liệu
     await engine.dispose()
 
 
-# Initialize FastAPI Application
+# Khởi tạo ứng dụng FastAPI với mô tả và tuyên bố miễn trừ y tế
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="1.0.0",
@@ -44,7 +44,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS Middleware
+# Cấu hình Middleware chia sẻ tài nguyên nguồn gốc chéo (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -53,7 +53,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount API Routers
+# Gắn kết các router API phiên bản v1
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
 
