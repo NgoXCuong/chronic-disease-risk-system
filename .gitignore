@@ -2,6 +2,14 @@
 # GITIGNORE: CHRONIC DISEASE RISK SYSTEM
 # ==========================================
 
+# --- Internal Rules & Planning Documents (Chỉ lưu trên máy local) ---
+AGENTS.md
+**/AGENTS.md
+GEMINI.md
+**/GEMINI.md
+KE_HOACH_*.md
+docs/
+
 # --- Environment & Secrets ---
 .env
 .env.*
