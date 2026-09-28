@@ -12,6 +12,21 @@ from app.schemas.profile import (
     PatientProfileUpdate,
     PatientProfileResponse,
 )
+from app.schemas.screening import (
+    LifestyleScreeningRequest,
+    ClinicalDiabetesRequest,
+    RiskFactorItem,
+    DiseasePredictionResponse,
+    LoadedModelSummary,
+)
+from app.schemas.record import (
+    ScreeningResultDetail,
+    HealthRecordResponse,
+    ScreeningHistoryItem,
+    ScreeningHistoryResponse,
+    RiskTrajectoryPoint,
+    RiskTrajectoryResponse,
+)
 
 __all__ = [
     "UserRegisterRequest",
@@ -24,4 +39,16 @@ __all__ = [
     "PatientProfileBase",
     "PatientProfileUpdate",
     "PatientProfileResponse",
+    "LifestyleScreeningRequest",
+    "ClinicalDiabetesRequest",
+    "RiskFactorItem",
+    "DiseasePredictionResponse",
+    "LoadedModelSummary",
+    "ScreeningResultDetail",
+    "HealthRecordResponse",
+    "ScreeningHistoryItem",
+    "ScreeningHistoryResponse",
+    "RiskTrajectoryPoint",
+    "RiskTrajectoryResponse",
 ]
+

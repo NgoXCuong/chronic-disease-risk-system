@@ -17,6 +17,7 @@ from app.models.user import User
 
 # Khởi tạo lược đồ xác thực HTTP Bearer
 bearer_scheme = HTTPBearer(auto_error=True)
+optional_bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def hash_password(plain_password: str) -> str:
@@ -156,6 +157,38 @@ async def get_current_user(
         )
 
     return user
+
+
+async def get_optional_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(optional_bearer_scheme),
+    db: AsyncSession = Depends(get_async_db)
+) -> Optional[User]:
+    """
+    Dependency bảo mật tùy chọn:
+    Nếu có Authorization Bearer header, tiến hành giải mã token và trả về User.
+    Nếu không có token hoặc token không hợp lệ/hết hạn, trả về None thay vì quăng lỗi 401.
+    """
+    if not credentials or not credentials.credentials:
+        return None
+
+    try:
+        token = credentials.credentials
+        payload = decode_token(token)
+        if payload.get("type") != "access":
+            return None
+
+        user_id_str = payload.get("sub")
+        if not user_id_str:
+            return None
+
+        user_uuid = uuid.UUID(user_id_str)
+        result = await db.execute(select(User).where(User.id == user_uuid))
+        user = result.scalar_one_or_none()
+        if not user or not user.is_active:
+            return None
+        return user
+    except Exception:
+        return None
 
 
 def require_roles(allowed_roles: List[UserRole]):

@@ -155,6 +155,7 @@ class MLService:
         risk_level = cls._stratify_risk_level(risk_score, model_obj.risk_levels)
 
         # 5. Tính toán giá trị giải thích SHAP XAI tức thì qua C++ Booster
+        full_shap_dict: Dict[str, float] = {}
         top_risk_factors: List[RiskFactorItem] = []
         try:
             dmat = xgb.DMatrix(X_transformed)
@@ -165,14 +166,15 @@ class MLService:
             shap_tuples = []
             for i, feat in enumerate(features_order):
                 shap_val = float(feature_contribs[i])
+                full_shap_dict[feat] = round(shap_val, 4)
                 raw_val = input_data.get(feat, 0.0)
                 shap_tuples.append((feat, raw_val, shap_val))
 
             # Sắp xếp theo giá trị tuyệt đối độ đóng góp giảm dần
             shap_tuples.sort(key=lambda item: abs(item[2]), reverse=True)
 
-            # Lấy Top 3 - 5 yếu tố có đóng góp lớn nhất
-            for feat, raw_val, shap_val in shap_tuples[:4]:
+            # Lấy Top 5 yếu tố có đóng góp lớn nhất (theo yêu cầu FR-10)
+            for feat, raw_val, shap_val in shap_tuples[:5]:
                 impact_pct = round(abs(shap_val) * 10.0, 1)
                 is_pos = shap_val > 0
                 sign_str = "+" if is_pos else "-"
@@ -215,4 +217,6 @@ class MLService:
             is_above_threshold=is_above_threshold,
             top_risk_factors=top_risk_factors,
             recommendations=recommendations,
+            shap_summary=full_shap_dict,
         )
+

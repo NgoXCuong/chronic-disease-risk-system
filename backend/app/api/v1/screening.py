@@ -1,12 +1,22 @@
 """
 API Router Phục vụ Đánh giá Sàng lọc Nguy cơ Bệnh Mạn tính (Screening & Risk Assessment).
-Hỗ trợ cả sàng lọc từng bệnh lý và sàng lọc tổng hợp đa bệnh (Tầng 1 BRFSS & Tầng 2 Lâm sàng).
+Hỗ trợ cả sàng lọc từng bệnh lý, sàng lọc toàn diện đa bệnh, và theo dõi dọc chuỗi thời gian (FR-07 -> FR-15).
 """
-from typing import Annotated, Any, Dict, List, Optional, Union
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+import uuid
+from typing import Annotated, Any, Dict, List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_async_db
 from app.core.model_loader import ModelRegistry
-from app.models.enums import DiseaseType
+from app.core.security import get_current_user, get_optional_current_user
+from app.models.enums import DiseaseType, RecordType
+from app.models.user import User
+from app.schemas.record import (
+    HealthRecordResponse,
+    RiskTrajectoryResponse,
+    ScreeningHistoryResponse,
+)
 from app.schemas.screening import (
     ClinicalDiabetesRequest,
     DiseasePredictionResponse,
@@ -14,8 +24,14 @@ from app.schemas.screening import (
     LoadedModelSummary,
 )
 from app.services.ml_service import MLService, DISEASE_NAME_VI_MAP
+from app.services.record_service import RecordService
 
 router = APIRouter(prefix="/screening", tags=["3. Sàng lọc & Đánh giá Nguy cơ (Screening & AI Engine)"])
+
+# Type Aliases cho Dependency Injection ngắn gọn theo Trụ cột 1
+DatabaseSession = Annotated[AsyncSession, Depends(get_async_db)]
+OptionalUser = Annotated[Optional[User], Depends(get_optional_current_user)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.get(
@@ -49,12 +65,14 @@ async def list_loaded_models():
     summary="Đánh giá nguy cơ một bệnh lý theo Khảo sát Lối sống (Tầng 1)",
     description=(
         "Chỉ định bệnh lý cần sàng lọc: `diabetes_binary`, `hypertension`, `cardiovascular`, hoặc `stroke`. "
-        "Truyền vào bộ 21 chỉ số khảo sát hành vi và nhân trắc CDC BRFSS."
+        "Tự động lưu trữ CSDL (health_records + screening_results) nếu người dùng đã đăng nhập."
     ),
 )
 async def predict_lifestyle_disease(
     disease_name: DiseaseType,
     req: LifestyleScreeningRequest,
+    db: DatabaseSession,
+    current_user: OptionalUser = None,
 ):
     if disease_name == DiseaseType.DIABETES_CLINICAL:
         raise HTTPException(
@@ -62,8 +80,21 @@ async def predict_lifestyle_disease(
             detail="Bệnh 'diabetes_clinical' yêu cầu các chỉ số xét nghiệm lâm sàng. Vui lòng sử dụng endpoint: /predict/clinical/diabetes",
         )
 
-    input_data = req.model_dump()
-    return MLService.predict_disease_risk(disease_name.value, input_data)
+    input_data = req.model_dump(exclude={"notes"})
+    pred = MLService.predict_disease_risk(disease_name.value, input_data)
+
+    # Nếu người dùng đã đăng nhập, tự động lưu kết quả vào CSDL theo FR-12
+    if current_user:
+        await RecordService.save_screening_assessment(
+            db=db,
+            user_id=current_user.id,
+            record_type=RecordType.LIFESTYLE_BRFSS,
+            input_data=input_data,
+            predictions=[pred],
+            notes=req.notes,
+        )
+
+    return pred
 
 
 @router.post(
@@ -74,9 +105,24 @@ async def predict_lifestyle_disease(
 )
 async def predict_clinical_diabetes(
     req: ClinicalDiabetesRequest,
+    db: DatabaseSession,
+    current_user: OptionalUser = None,
 ):
-    input_data = req.model_dump()
-    return MLService.predict_disease_risk(DiseaseType.DIABETES_CLINICAL.value, input_data)
+    input_data = req.model_dump(exclude={"notes"})
+    pred = MLService.predict_disease_risk(DiseaseType.DIABETES_CLINICAL.value, input_data)
+
+    # Tự động lưu vào CSDL nếu có phiên đăng nhập
+    if current_user:
+        await RecordService.save_screening_assessment(
+            db=db,
+            user_id=current_user.id,
+            record_type=RecordType.CLINICAL_PIMA,
+            input_data=input_data,
+            predictions=[pred],
+            notes=req.notes,
+        )
+
+    return pred
 
 
 @router.post(
@@ -86,13 +132,15 @@ async def predict_clinical_diabetes(
     description=(
         "Người bệnh chỉ cần điền 1 biểu mẫu khảo sát lối sống duy nhất. "
         "Hệ thống sẽ chạy song song qua 4 mô hình Machine Learning (Tiểu đường, Huyết áp, Tim mạch, Đột quỵ) "
-        "và trả về bức tranh rủi ro toàn diện."
+        "và tự động lưu trọn gói vào CSDL nếu đã đăng nhập."
     ),
 )
 async def predict_comprehensive_risk(
     req: LifestyleScreeningRequest,
+    db: DatabaseSession,
+    current_user: OptionalUser = None,
 ):
-    input_data = req.model_dump()
+    input_data = req.model_dump(exclude={"notes"})
     target_diseases = [
         DiseaseType.DIABETES_BINARY.value,
         DiseaseType.HYPERTENSION.value,
@@ -111,4 +159,73 @@ async def predict_comprehensive_risk(
                 detail=f"Lỗi khi đánh giá bệnh '{d}': {str(e)}",
             )
 
+    # Lưu trữ đồng bộ 1 HealthRecord và 4 ScreeningResults trong 1 transaction
+    if current_user:
+        await RecordService.save_screening_assessment(
+            db=db,
+            user_id=current_user.id,
+            record_type=RecordType.LIFESTYLE_BRFSS,
+            input_data=input_data,
+            predictions=list(comprehensive_results.values()),
+            notes=req.notes,
+        )
+
     return comprehensive_results
+
+
+@router.get(
+    "/history",
+    response_model=ScreeningHistoryResponse,
+    summary="Lịch sử các đợt sàng lọc của người dùng (FR-13)",
+    description="Truy vấn danh sách các lần thực hiện khảo sát, có phân trang và tùy chọn lọc theo bệnh lý.",
+)
+async def get_screening_history(
+    current_user: CurrentUser,
+    db: DatabaseSession,
+    page: int = Query(1, ge=1, description="Số thứ tự trang (bắt đầu từ 1)"),
+    page_size: int = Query(10, ge=1, le=100, description="Số bản ghi mỗi trang (1 - 100)"),
+    disease_type: Optional[DiseaseType] = Query(None, description="Lọc theo mã bệnh lý mạn tính cụ thể"),
+):
+    return await RecordService.get_user_screening_history(
+        db=db,
+        user_id=current_user.id,
+        page=page,
+        page_size=page_size,
+        disease_type=disease_type,
+    )
+
+
+@router.get(
+    "/history/{record_id}",
+    response_model=HealthRecordResponse,
+    summary="Chi tiết một đợt sàng lọc cụ thể (FR-12, FR-13)",
+    description="Xem lại toàn bộ chỉ số đầu vào, điểm nguy cơ, phân tầng và giải thích SHAP XAI của lần khám.",
+)
+async def get_screening_record_detail(
+    record_id: uuid.UUID,
+    current_user: CurrentUser,
+    db: DatabaseSession,
+):
+    return await RecordService.get_screening_record_detail(
+        db=db,
+        user_id=current_user.id,
+        record_id=record_id,
+    )
+
+
+@router.get(
+    "/trajectory/{disease_name}",
+    response_model=RiskTrajectoryResponse,
+    summary="Biểu đồ Chuỗi thời gian Diễn tiến Nguy cơ theo từng Bệnh lý (FR-14, FR-15)",
+    description="Tính toán biến thiên nguy cơ (Delta Risk) giữa các lần khám và đánh giá xu hướng tiến triển.",
+)
+async def get_disease_risk_trajectory(
+    disease_name: DiseaseType,
+    current_user: CurrentUser,
+    db: DatabaseSession,
+):
+    return await RecordService.get_disease_risk_trajectory(
+        db=db,
+        user_id=current_user.id,
+        disease_type=disease_name,
+    )

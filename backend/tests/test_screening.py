@@ -6,17 +6,11 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 
 from app.main import app
-from app.core.model_loader import ModelRegistry
-
-
-@pytest.fixture(autouse=True)
-def ensure_models_loaded():
-    """Bảo đảm 5 mô hình ML được nạp sẵn vào RAM trước khi chạy kiểm thử."""
-    ModelRegistry.load_all_models()
 
 
 @pytest.mark.asyncio
 async def test_get_loaded_models_registry():
+
     """Kiểm tra API liệt kê danh sách 5 mô hình đã nạp vào RAM."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

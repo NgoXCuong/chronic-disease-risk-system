@@ -21,11 +21,17 @@ class MLModelRegistry(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     disease_type: Mapped[DiseaseType] = mapped_column(
-        Enum(DiseaseType, name="disease_type_enum", create_type=False),
+        Enum(
+            DiseaseType,
+            name="disease_type_enum",
+            create_type=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
         nullable=False,
         index=True,
         doc="Target chronic non-communicable disease"
     )
+
     version: Mapped[str] = mapped_column(
         String(50),
         default="1.0.0",

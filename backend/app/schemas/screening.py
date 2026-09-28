@@ -37,6 +37,7 @@ class LifestyleScreeningRequest(BaseModel):
     Age: int = Field(..., ge=1, le=13, description="Nhóm tuổi CDC (1: 18-24, 2: 25-29, ..., 9: 60-64, ..., 13: 80+)")
     Education: int = Field(default=4, ge=1, le=6, description="Trình độ học vấn (1: Chưa tốt nghiệp TH, 4: Tốt nghiệp THPT, 6: Đại học)")
     Income: int = Field(default=5, ge=1, le=8, description="Khung thu nhập gia đình (1: Thấp nhất -> 8: Cao nhất)")
+    notes: Optional[str] = Field(default=None, max_length=1000, description="Ghi chú lâm sàng hoặc triệu chứng bổ sung")
 
 
 class ClinicalDiabetesRequest(BaseModel):
@@ -46,7 +47,7 @@ class ClinicalDiabetesRequest(BaseModel):
     """
     model_config = ConfigDict(extra="ignore")
 
-    Pregnancies: int = Field(default=0, ge=0, le=20, description="Số lần mang thai")
+    Pregnancies: int = Field(default=0, ge=0, le=25, description="Số lần mang thai")
     Glucose: float = Field(..., ge=40.0, le=500.0, description="Nồng độ Glucose huyết tương lúc đói (mg/dL)")
     BloodPressure: float = Field(..., ge=30.0, le=200.0, description="Huyết áp tâm trương khi đo (mmHg)")
     SkinThickness: float = Field(default=20.0, ge=5.0, le=100.0, description="Độ dày nếp gấp da cơ tam đầu (mm)")
@@ -54,6 +55,7 @@ class ClinicalDiabetesRequest(BaseModel):
     BMI: float = Field(..., ge=10.0, le=70.0, description="Chỉ số khối cơ thể (BMI = kg / m^2)")
     DiabetesPedigreeFunction: float = Field(default=0.47, ge=0.05, le=3.0, description="Chỉ số phả hệ đái tháo đường di truyền")
     Age: int = Field(..., ge=18, le=120, description="Tuổi tính theo năm")
+    notes: Optional[str] = Field(default=None, max_length=1000, description="Ghi chú lâm sàng hoặc triệu chứng bổ sung")
 
 
 class RiskFactorItem(BaseModel):
@@ -80,6 +82,9 @@ class DiseasePredictionResponse(BaseModel):
     is_above_threshold: bool = Field(..., description="True nếu điểm nguy cơ vượt ngưỡng cảnh báo lâm sàng")
     top_risk_factors: List[RiskFactorItem] = Field(default_factory=list, description="Top các yếu tố đóng góp chính theo SHAP")
     recommendations: List[str] = Field(default_factory=list, description="Khuyến nghị lối sống và theo dõi lâm sàng")
+    shap_summary: Optional[Dict[str, float]] = Field(default=None, description="Toàn bộ giá trị SHAP attribution của các đặc trưng (FR-12)")
+    record_id: Optional[str] = Field(default=None, description="ID bản ghi khảo sát sức khỏe lưu trong CSDL (UUID)")
+    screening_result_id: Optional[str] = Field(default=None, description="ID kết quả sàng lọc lưu trong CSDL (UUID)")
     disclaimer: str = Field(
         default="Kết quả chỉ mang tính sàng lọc hỗ trợ quyết định, không thay thế chẩn đoán chuyên môn y khoa.",
         description="Tuyên bố miễn trừ trách nhiệm y tế bắt buộc"
@@ -96,3 +101,4 @@ class LoadedModelSummary(BaseModel):
     features_count: int
     features_order: List[str]
     metrics: Dict[str, Any]
+

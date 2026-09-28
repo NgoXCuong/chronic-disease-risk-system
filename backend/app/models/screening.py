@@ -36,10 +36,16 @@ class ScreeningResult(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         doc="Foreign Key pointing to raw health survey input"
     )
     disease_type: Mapped[DiseaseType] = mapped_column(
-        Enum(DiseaseType, name="disease_type_enum", create_type=False),
+        Enum(
+            DiseaseType,
+            name="disease_type_enum",
+            create_type=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
         nullable=False,
         doc="Target disease: diabetes, hypertension, cardiovascular, stroke, or clinical diabetes"
     )
+
     model_version: Mapped[str] = mapped_column(
         String(50),
         default="1.0.0",
