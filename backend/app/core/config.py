@@ -1,13 +1,13 @@
 import os
-from typing import List, Union
-from pydantic import AnyHttpUrl, validator
+from typing import List, Optional
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """
-    Cấu hình trung tâm của ứng dụng, nạp từ biến môi trường hoặc tệp .env.
-    Tuân thủ chuẩn BaseSettings của Pydantic v2.
+    Cấu hình trung tâm của ứng dụng, nạp an toàn từ biến môi trường hoặc tệp .env.
+    Tuân thủ nguyên tắc Twelve-Factor App: Không hard-code khóa bảo mật hay mật khẩu vào mã nguồn.
     """
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
@@ -22,27 +22,35 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
 
-    # Bảo mật và cấu hình Token JWT
-    SECRET_KEY: str = "supersecretjwtkey_chronic_disease_2026_thesis_security_key_xyz"
+    # Bảo mật và cấu hình Token JWT (Bắt buộc nạp từ biến môi trường .env)
+    SECRET_KEY: str = Field(..., description="Khóa bí mật ký JWT (tối thiểu 32 ký tự), nạp từ .env")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Cấu hình Cơ sở dữ liệu (PostgreSQL 16)
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres123"
-    POSTGRES_DB: str = "chronic_disease_db"
-    POSTGRES_HOST: str = "localhost"
-    POSTGRES_PORT: int = 5432
+    POSTGRES_USER: str = Field(default="postgres", description="Tên người dùng PostgreSQL")
+    POSTGRES_PASSWORD: str = Field(..., description="Mật khẩu PostgreSQL, bắt buộc nạp từ .env")
+    POSTGRES_DB: str = Field(default="chronic_disease_db", description="Tên cơ sở dữ liệu")
+    POSTGRES_HOST: str = Field(default="localhost", description="Địa chỉ máy chủ cơ sở dữ liệu")
+    POSTGRES_PORT: int = Field(default=5432, description="Cổng kết nối cơ sở dữ liệu")
 
-    # Chuỗi kết nối bất đồng bộ cho SQLAlchemy 2.0 (asyncpg)
-    DATABASE_URL: str = (
-        f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
-    )
-    # Chuỗi kết nối đồng bộ phục vụ Alembic migration
-    SYNC_DATABASE_URL: str = (
-        f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
-    )
+    # Chuỗi kết nối CSDL (Đọc từ .env hoặc tự động sinh nếu chưa được chỉ định)
+    DATABASE_URL: str = Field(default="", description="Chuỗi kết nối bất đồng bộ cho SQLAlchemy 2.0 (asyncpg)")
+    SYNC_DATABASE_URL: str = Field(default="", description="Chuỗi kết nối đồng bộ phục vụ Alembic migration")
+
+    @model_validator(mode="after")
+    def assemble_db_connection_strings(self):
+        """Tự động xây dựng chuỗi kết nối CSDL nếu chưa được cung cấp trực tiếp trong .env"""
+        if not self.DATABASE_URL:
+            self.DATABASE_URL = (
+                f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            )
+        if not self.SYNC_DATABASE_URL:
+            self.SYNC_DATABASE_URL = (
+                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            )
+        return self
 
     # Cấu hình Connection Pool cho Engine CSDL
     DB_POOL_SIZE: int = 10

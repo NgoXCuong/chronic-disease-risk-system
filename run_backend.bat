@@ -5,11 +5,11 @@ echo ===================================================================
 echo  KHOI CHAY BACKEND SERVER - HE THONG SANG LOC BENH MAN TINH
 echo ===================================================================
 echo.
-echo [1/2] Dang kiem tra thu muc backend...
+echo [1/2] Dang chuyen vao thu muc backend...
 cd /d "%~dp0backend"
 echo [2/2] Dang khoi chay may chu Uvicorn tai http://localhost:8000 ...
 echo       Swagger UI: http://localhost:8000/docs
 echo       Bam Ctrl + C de dung server.
 echo.
-python run.py
+python main.py
 pause

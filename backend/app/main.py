@@ -95,3 +95,14 @@ async def health_check():
         "database_connected": db_healthy,
         "version": "1.0.0",
     }
+
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+    import uvicorn
+
+    # Tự động thêm thư mục gốc backend vào sys.path để chạy trực tiếp không bị lỗi import app
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+
