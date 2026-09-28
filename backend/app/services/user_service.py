@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logger import logger
 from app.models.profile import PatientProfile
 from app.models.user import User
 from app.schemas.profile import PatientProfileResponse, PatientProfileUpdate
@@ -51,4 +52,5 @@ class UserService:
 
         await db.commit()
         await db.refresh(profile)
+        logger.info("[HỒ SƠ] Cập nhật thông tin nhân trắc thành công cho User ID: %s | BMI: %s", user_id, profile.bmi)
         return profile

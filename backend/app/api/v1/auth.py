@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -20,6 +20,10 @@ from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["1. Xác thực & Tài khoản (Authentication)"])
 
+# Định nghĩa Type Alias Dependency Injection ngắn gọn theo Trụ cột 1 (Concise & Minimalist)
+CurrentUser = Annotated[User, Depends(get_current_user)]
+DatabaseSession = Annotated[AsyncSession, Depends(get_async_db)]
+
 
 def get_client_ip(request: Request) -> str:
     """Trích xuất địa chỉ IP của client từ header HTTP hoặc kết nối mạng trực tiếp."""
@@ -39,7 +43,7 @@ def get_client_ip(request: Request) -> str:
 async def register(
     req: UserRegisterRequest,
     request: Request,
-    db: AsyncSession = Depends(get_async_db)
+    db: DatabaseSession
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
@@ -61,7 +65,7 @@ async def register(
 async def login(
     req: UserLoginRequest,
     request: Request,
-    db: AsyncSession = Depends(get_async_db)
+    db: DatabaseSession
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
@@ -77,7 +81,7 @@ async def login(
 async def refresh_token(
     req: RefreshTokenRequest,
     request: Request,
-    db: AsyncSession = Depends(get_async_db)
+    db: DatabaseSession
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
@@ -92,9 +96,9 @@ async def refresh_token(
 )
 async def logout(
     request: Request,
+    current_user: CurrentUser,
+    db: DatabaseSession,
     req: Optional[RefreshTokenRequest] = None,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db)
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
@@ -110,8 +114,8 @@ async def logout(
     description="Trả về thông tin tài khoản, vai trò và hồ sơ sức khỏe cá nhân của người dùng đang đăng nhập."
 )
 async def get_current_user_info(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db)
+    current_user: CurrentUser,
+    db: DatabaseSession
 ):
     res = await db.execute(
         select(User).options(selectinload(User.profile)).where(User.id == current_user.id)
@@ -128,8 +132,8 @@ async def get_current_user_info(
 async def change_password(
     req: PasswordChangeRequest,
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db)
+    current_user: CurrentUser,
+    db: DatabaseSession
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
