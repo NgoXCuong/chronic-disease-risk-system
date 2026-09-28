@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
+from app.core.logger import logger
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -89,6 +90,7 @@ class AuthService:
 
         await db.commit()
         await db.refresh(user)
+        logger.info("[ĐĂNG KÝ] Tạo tài khoản mới thành công: %s | Họ tên: %s", user.email, req.full_name or 'Chưa cập nhật')
         return user
 
     @staticmethod
@@ -106,6 +108,7 @@ class AuthService:
         user = result.scalar_one_or_none()
 
         if not user or not verify_password(req.password, user.hashed_password):
+            logger.warning("[ĐĂNG NHẬP] Thất bại cho email: '%s' (Mật khẩu sai hoặc tài khoản không tồn tại)", req.email)
             # Ghi nhận lần đăng nhập thất bại vào nhật ký kiểm toán
             audit = SystemAuditLog(
                 user_id=user.id if user else None,
@@ -126,6 +129,7 @@ class AuthService:
             )
 
         if not user.is_active:
+            logger.warning("[ĐĂNG NHẬP] Tài khoản bị vô hiệu hóa: %s", user.email)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
@@ -164,6 +168,13 @@ class AuthService:
         db.add(audit)
 
         await db.commit()
+
+        logger.info(
+            "[ĐĂNG NHẬP] Thành công: %s (Vai trò: %s) | Cấp cặp JWT Tokens (Hạn: %s phút)",
+            user.email,
+            user.role.value,
+            settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+        )
 
         return TokenResponse(
             access_token=access_token,

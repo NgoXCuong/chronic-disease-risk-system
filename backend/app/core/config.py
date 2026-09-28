@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
     DB_POOL_TIMEOUT: int = 30
+    DB_ECHO: bool = Field(default=False, description="In câu lệnh SQL thô ra terminal (True: bật, False: tắt)")
 
     # Cấu hình nguồn gốc được phép truy cập (CORS Origins)
     CORS_ORIGINS: List[str] = [

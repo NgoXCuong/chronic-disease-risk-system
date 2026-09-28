@@ -9,7 +9,7 @@ from app.core.config import settings
 # Khởi tạo Async Engine kết nối cơ sở dữ liệu PostgreSQL 16
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=settings.DEBUG,
+    echo=settings.DB_ECHO,
     future=True,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
