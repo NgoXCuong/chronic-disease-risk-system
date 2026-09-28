@@ -11,5 +11,5 @@ echo [2/2] Dang khoi chay may chu Uvicorn tai http://localhost:8000 ...
 echo       Swagger UI: http://localhost:8000/docs
 echo       Bam Ctrl + C de dung server.
 echo.
-python main.py
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 pause

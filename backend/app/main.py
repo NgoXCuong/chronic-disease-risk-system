@@ -8,6 +8,7 @@ from sqlalchemy import text
 from app.api.v1 import api_v1_router
 from app.core.config import settings
 from app.core.database import engine
+from app.core.model_loader import ModelRegistry
 
 
 @asynccontextmanager
@@ -23,9 +24,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         print(f"[NGUY HIỂM] Không thể kết nối cơ sở dữ liệu PostgreSQL: {e}")
 
+    # 2. Nạp toàn bộ 5 mô hình Machine Learning vào bộ nhớ RAM duy nhất một lần (0ms Disk I/O)
+    try:
+        models = ModelRegistry.load_all_models()
+        app.state.models = models
+    except Exception as e:
+        print(f"[LỖI NẠP MÔ HÌNH] Không thể nạp mô hình Machine Learning: {e}")
+
     yield
 
-    # 2. Tắt ứng dụng (Shutdown): Đóng an toàn toàn bộ kết nối cơ sở dữ liệu
+    # 3. Tắt ứng dụng (Shutdown): Đóng an toàn toàn bộ kết nối cơ sở dữ liệu
     await engine.dispose()
 
 
@@ -57,23 +65,6 @@ app.add_middleware(
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
 
-@app.get(
-    "/",
-    tags=["0. Trạng thái Hệ thống (System Health)"],
-    summary="Trang thông tin tổng quan API",
-    status_code=status.HTTP_200_OK,
-)
-async def root():
-    return {
-        "project": settings.PROJECT_NAME,
-        "version": "1.0.0",
-        "environment": settings.ENVIRONMENT,
-        "status": "online",
-        "docs_url": "/docs",
-        "redoc_url": "/redoc",
-        "disclaimer": "Hệ thống hỗ trợ ra quyết định y tế, không thay thế chẩn đoán lâm sàng của bác sĩ.",
-    }
-
 
 @app.get(
     "/health",
@@ -102,7 +93,6 @@ if __name__ == "__main__":
     from pathlib import Path
     import uvicorn
 
-    # Tự động thêm thư mục gốc backend vào sys.path để chạy trực tiếp không bị lỗi import app
+    # Tự động thêm thư mục backend vào sys.path để nhận diện package app
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
-
