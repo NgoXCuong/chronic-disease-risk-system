@@ -92,18 +92,16 @@ async def refresh_token(
     "/logout",
     response_model=MessageResponse,
     summary="Đăng xuất khỏi hệ thống",
-    description="Hủy và thu hồi (revoke) Refresh Token hiện tại để ngăn chặn việc tái sử dụng."
+    description="Hủy và thu hồi (revoke) Refresh Token hiện tại để kết thúc phiên làm việc an toàn. Không bắt buộc phải có Access Token."
 )
 async def logout(
+    req: RefreshTokenRequest,
     request: Request,
-    current_user: CurrentUser,
     db: DatabaseSession,
-    req: Optional[RefreshTokenRequest] = None,
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
-    raw_token = req.refresh_token if req else None
-    await AuthService.logout_user(db, current_user, raw_token, ip_address, user_agent)
+    await AuthService.logout_user(db, req.refresh_token, ip_address, user_agent)
     return MessageResponse(message="Đăng xuất thành công. Phiên làm việc đã kết thúc an toàn.")
 
 

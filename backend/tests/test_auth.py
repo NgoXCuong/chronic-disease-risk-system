@@ -127,12 +127,11 @@ async def test_auth_full_lifecycle():
         )
         assert res_new_login.status_code == 200
 
-        # 11. Logout
-        active_access = res_new_login.json()["access_token"]
+        # 11. Logout (Chỉ cần gửi Refresh Token trong body, không bắt buộc header Authorization)
         active_refresh = res_new_login.json()["refresh_token"]
         res_logout = await client.post(
             "/api/v1/auth/logout",
             json={"refresh_token": active_refresh},
-            headers={"Authorization": f"Bearer {active_access}"},
         )
         assert res_logout.status_code == 200
+        assert "Đăng xuất thành công" in res_logout.json()["message"]

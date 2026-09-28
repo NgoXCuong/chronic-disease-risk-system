@@ -314,34 +314,55 @@ class AuthService:
     @staticmethod
     async def logout_user(
         db: AsyncSession,
-        user: User,
-        raw_refresh_token: Optional[str] = None,
+        raw_refresh_token: str,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> None:
-        """Thu hồi refresh token khi đăng xuất và ghi vết nhật ký kiểm toán."""
-        if raw_refresh_token:
-            token_digest = hash_token(raw_refresh_token)
-            await db.execute(
-                update(UserAuthToken)
-                .where(
-                    UserAuthToken.user_id == user.id,
-                    UserAuthToken.token_hash == token_digest,
-                )
-                .values(is_revoked=True)
+        """
+        Thu hồi refresh token khi đăng xuất và ghi vết nhật ký kiểm toán.
+        Giải mã trực tiếp refresh_token để xác định phiên làm việc, không bắt buộc cần Access Token.
+        """
+        payload = decode_token(raw_refresh_token)
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mã token gửi lên không phải là Refresh Token hợp lệ.",
             )
 
+        user_id_str = payload.get("sub")
+        if not user_id_str:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token không chứa thông tin định danh người dùng.",
+            )
+
+        user_uuid = uuid.UUID(user_id_str)
+        token_digest = hash_token(raw_refresh_token)
+
+        # Cập nhật thu hồi token trong CSDL
+        await db.execute(
+            update(UserAuthToken)
+            .where(
+                UserAuthToken.user_id == user_uuid,
+                UserAuthToken.token_hash == token_digest,
+            )
+            .values(is_revoked=True)
+        )
+
+        user_email = payload.get("email", "unknown")
         audit = SystemAuditLog(
-            user_id=user.id,
+            user_id=user_uuid,
             action="AUTH_LOGOUT",
             resource="/api/v1/auth/logout",
             ip_address=ip_address,
             user_agent=user_agent,
             status_code=200,
-            details={"email": user.email},
+            details={"email": user_email},
         )
         db.add(audit)
         await db.commit()
+
+        logger.info("[ĐĂNG XUẤT] Thu hồi thành công Refresh Token cho: %s", user_email)
 
     @staticmethod
     async def change_password(
