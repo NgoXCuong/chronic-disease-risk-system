@@ -14,6 +14,8 @@ const alertVariants = cva(
           "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 [&>svg]:text-emerald-600 dark:[&>svg]:text-emerald-400",
         warning:
           "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400",
+        info:
+          "border-medical-200 bg-medical-50 text-medical-800 dark:border-medical-900/60 dark:bg-medical-950/40 dark:text-medical-300 [&>svg]:text-medical-600 dark:[&>svg]:text-medical-400",
       },
     },
     defaultVariants: {
