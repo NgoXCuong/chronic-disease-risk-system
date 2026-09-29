@@ -31,6 +31,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Nạp thông tin người dùng từ phiên làm việc HttpOnly Cookie
   const fetchCurrentUser = React.useCallback(async () => {
+    // Nếu trình duyệt chưa từng đăng nhập (không có cookie cờ đăng nhập), bỏ qua gọi API tránh lỗi 401
+    if (typeof document !== "undefined" && !document.cookie.includes("medrisk_logged_in=true")) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       const res = await api.get<User>("/auth/me");

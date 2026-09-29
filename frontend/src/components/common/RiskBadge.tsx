@@ -9,6 +9,7 @@ interface RiskBadgeProps {
   score?: number;
   percentage?: number;
   showIcon?: boolean;
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -17,6 +18,7 @@ export function RiskBadge({
   score,
   percentage,
   showIcon = true,
+  size = "md",
   className,
 }: RiskBadgeProps) {
   const normalizedLevel = (level || "LOW").toUpperCase() as RiskLevel;
@@ -49,15 +51,22 @@ export function RiskBadge({
 
   const IconComponent = config.icon;
 
+  const sizeClasses = {
+    sm: "px-2 py-0.5 text-[10px] gap-1",
+    md: "px-3 py-1 text-xs gap-1.5",
+    lg: "px-4 py-1.5 text-sm gap-2",
+  }[size];
+
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border tracking-wide shadow-sm",
+        "inline-flex items-center rounded-full font-bold border tracking-wide shadow-sm",
+        sizeClasses,
         config.classes,
         className
       )}
     >
-      {showIcon && <IconComponent className={cn("w-3.5 h-3.5", config.iconColor)} />}
+      {showIcon && <IconComponent className={cn(size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5", config.iconColor)} />}
       <span>{config.label}</span>
       {percentage !== undefined && (
         <span className="font-extrabold ml-0.5">({percentage.toFixed(1)}%)</span>

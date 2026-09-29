@@ -33,6 +33,19 @@ const processQueue = (error: AxiosError | null) => {
 };
 
 /**
+ * Điều hướng an toàn khi phiên làm việc thực sự hết hạn trên trang bảo vệ.
+ * Tuyệt đối không reload trang hoặc redirect nếu người dùng đã ở sẵn trang /login, /register hoặc trang chủ /.
+ */
+function safeSessionExpiredRedirect() {
+  if (typeof window === "undefined") return;
+  const path = window.location.pathname;
+  if (path.startsWith("/login") || path.startsWith("/register") || path === "/") {
+    return;
+  }
+  window.location.href = `/login?callbackUrl=${encodeURIComponent(path)}&session_expired=true`;
+}
+
+/**
  * Response Interceptor: Tự động xử lý Refresh Token Rotation khi gặp 401
  * Trình duyệt tự gửi HttpOnly cookie 'refresh_token' qua withCredentials: true mà không cần JavaScript can thiệp.
  */
@@ -58,11 +71,14 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Nếu request này đã thử refresh một lần rồi mà vẫn 401 -> Chuyển về trang đăng nhập
+    // Nếu /auth/me bị 401 (người dùng chưa đăng nhập), chỉ reject để state user=null, KHÔNG redirect
+    if (requestUrl.includes("/auth/me")) {
+      return Promise.reject(error);
+    }
+
+    // Nếu request này đã thử refresh một lần rồi mà vẫn 401 -> Chuyển về trang đăng nhập an toàn
     if (originalRequest._retry) {
-      if (typeof window !== "undefined") {
-        window.location.href = "/login?session_expired=true";
-      }
+      safeSessionExpiredRedirect();
       return Promise.reject(error);
     }
 
@@ -91,9 +107,7 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshErr) {
       processQueue(refreshErr as AxiosError);
-      if (typeof window !== "undefined") {
-        window.location.href = "/login?session_expired=true";
-      }
+      safeSessionExpiredRedirect();
       return Promise.reject(refreshErr);
     } finally {
       isRefreshing = false;
