@@ -5,7 +5,13 @@ import { Control, Controller, FieldErrors, UseFormRegister } from "react-hook-fo
 import { Activity, Brain, Heart, ShieldAlert, Smile, Stethoscope } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { MedicalInputField } from "@/components/common/MedicalInputField";
 import { OptionButtonGroup } from "@/components/common/OptionButtonGroup";
 import { GEN_HEALTH_OPTIONS } from "@/lib/screening-constants";
@@ -126,22 +132,33 @@ export function ScreeningStep2Conditions({
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Tự đánh giá sức khỏe */}
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Tự đánh giá sức khỏe tổng quát của bản thân <span className="text-rose-500">*</span>
-              </Label>
-              <Select
-                {...register("GenHlth", { valueAsNumber: true })}
-                className="w-full min-h-[44px]"
-              >
-                {GEN_HEALTH_OPTIONS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label} — {item.desc}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            {/* Tự đánh giá sức khỏe - Chuẩn Shadcn UI Select */}
+            <Controller
+              name="GenHlth"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    Tự đánh giá sức khỏe tổng quát của bản thân <span className="text-rose-500">*</span>
+                  </Label>
+                  <Select
+                    value={field.value ? String(field.value) : "2"}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                  >
+                    <SelectTrigger className="w-full min-h-[44px]">
+                      <SelectValue placeholder="Đánh giá sức khỏe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GEN_HEALTH_OPTIONS.map((item) => (
+                        <SelectItem key={item.value} value={String(item.value)}>
+                          {item.label} — {item.desc}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            />
 
             <Controller
               name="DiffWalk"

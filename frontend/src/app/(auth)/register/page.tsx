@@ -104,7 +104,13 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <RegisterAccountSection register={register} errors={errors} passwordValue={watchedPassword} />
-            <RegisterVitalsSection register={register} errors={errors} heightValue={watchedHeight} weightValue={watchedWeight} />
+            <RegisterVitalsSection
+              register={register}
+              control={control}
+              errors={errors}
+              heightValue={watchedHeight}
+              weightValue={watchedWeight}
+            />
 
             <Button
               type="submit"

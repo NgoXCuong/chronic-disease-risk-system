@@ -1,15 +1,24 @@
 "use client";
 
 import * as React from "react";
-import { UseFormRegister, FieldErrors } from "react-hook-form";
-import { Calendar, Heart, Ruler, User, Weight } from "lucide-react";
+import { Control, Controller, FieldErrors, UseFormRegister } from "react-hook-form";
+import { Heart, Ruler, User, Weight } from "lucide-react";
 import { MedicalInputField } from "@/components/common/MedicalInputField";
+import { MedicalDatePicker } from "@/components/common/MedicalDatePicker";
+import { NumberStepperInput } from "@/components/common/NumberStepperInput";
 import { BMICalculatorCard } from "@/components/common/BMICalculatorCard";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface RegisterVitalsSectionProps {
   register: UseFormRegister<any>;
+  control: any;
   errors: FieldErrors<any>;
   heightValue?: number | string;
   weightValue?: number | string;
@@ -17,6 +26,7 @@ interface RegisterVitalsSectionProps {
 
 export function RegisterVitalsSection({
   register,
+  control,
   errors,
   heightValue,
   weightValue,
@@ -31,6 +41,7 @@ export function RegisterVitalsSection({
         2. Thông tin bệnh nhân &amp; Thể trạng ban đầu
       </h3>
 
+      {/* Họ và tên bệnh nhân */}
       <MedicalInputField
         id="full_name"
         label="Họ và tên bệnh nhân"
@@ -41,50 +52,95 @@ export function RegisterVitalsSection({
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <MedicalInputField
-          id="date_of_birth"
-          type="date"
-          label="Ngày sinh"
-          icon={Calendar}
-          error={errors.date_of_birth?.message as string}
-          {...register("date_of_birth")}
+        {/* Chọn ngày sinh chuẩn y tế dd/mm/yyyy */}
+        <Controller
+          name="date_of_birth"
+          control={control}
+          render={({ field }) => (
+            <MedicalDatePicker
+              id="date_of_birth"
+              label="Ngày sinh"
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.date_of_birth?.message as string}
+            />
+          )}
         />
 
-        <div className="space-y-1.5">
-          <Label htmlFor="gender">Giới tính sinh học</Label>
-          <Select id="gender" {...register("gender")}>
-            <option value="">Chọn giới tính sinh học</option>
-            <option value="MALE">Nam giới</option>
-            <option value="FEMALE">Nữ giới</option>
-            <option value="OTHER">Khác</option>
-          </Select>
-        </div>
+        {/* Chọn giới tính chuẩn Shadcn UI Select (Radix UI) */}
+        <Controller
+          name="gender"
+          control={control}
+          render={({ field }) => (
+            <div className="space-y-1.5">
+              <Label htmlFor="gender" className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                Giới tính sinh học
+              </Label>
+              <Select value={field.value || ""} onValueChange={field.onChange}>
+                <SelectTrigger id="gender">
+                  <SelectValue placeholder="Chọn giới tính sinh học" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MALE">Nam giới</SelectItem>
+                  <SelectItem value="FEMALE">Nữ giới</SelectItem>
+                  <SelectItem value="OTHER">Khác</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.gender?.message && (
+                <p className="text-[11px] text-rose-500 font-medium">
+                  {String(errors.gender.message)}
+                </p>
+              )}
+            </div>
+          )}
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <MedicalInputField
-          id="height_cm"
-          type="number"
-          step="0.5"
-          label="Chiều cao (cm)"
-          icon={Ruler}
-          placeholder="Ví dụ: 168"
-          error={errors.height_cm?.message as string}
-          {...register("height_cm")}
+        {/* Tăng giảm chiều cao có nút +/- chuẩn Stepper */}
+        <Controller
+          name="height_cm"
+          control={control}
+          render={({ field }) => (
+            <NumberStepperInput
+              id="height_cm"
+              label="Chiều cao"
+              unit="cm"
+              min={50}
+              max={250}
+              step={0.5}
+              icon={Ruler}
+              placeholder="168"
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.height_cm?.message as string}
+            />
+          )}
         />
 
-        <MedicalInputField
-          id="weight_kg"
-          type="number"
-          step="0.5"
-          label="Cân nặng (kg)"
-          icon={Weight}
-          placeholder="Ví dụ: 62"
-          error={errors.weight_kg?.message as string}
-          {...register("weight_kg")}
+        {/* Tăng giảm cân nặng có nút +/- chuẩn Stepper */}
+        <Controller
+          name="weight_kg"
+          control={control}
+          render={({ field }) => (
+            <NumberStepperInput
+              id="weight_kg"
+              label="Cân nặng"
+              unit="kg"
+              min={20}
+              max={300}
+              step={0.5}
+              icon={Weight}
+              placeholder="62"
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.weight_kg?.message as string}
+            />
+          )}
         />
       </div>
 
+      {/* Thẻ tính BMI theo chuẩn WPRO y tế */}
       {heightNum && weightNum && heightNum > 0 && weightNum > 0 && (
         <BMICalculatorCard heightCm={heightNum} weightKg={weightNum} className="mt-2" />
       )}

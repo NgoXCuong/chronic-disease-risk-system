@@ -5,10 +5,16 @@ import { Control, Controller, FieldErrors, UseFormRegister } from "react-hook-fo
 import { Apple, Cigarette, Dumbbell, Ruler, Scale, Wine } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { MedicalInputField } from "@/components/common/MedicalInputField";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { BMICalculatorCard } from "@/components/common/BMICalculatorCard";
 import { OptionButtonGroup } from "@/components/common/OptionButtonGroup";
+import { NumberStepperInput } from "@/components/common/NumberStepperInput";
 import {
   CDC_AGE_OPTIONS,
   EDUCATION_OPTIONS,
@@ -63,64 +69,97 @@ export function ScreeningStep1Demographics({
               )}
             />
 
-            {/* Nhóm tuổi CDC BRFSS */}
-            <div className="space-y-1.5">
-              <Label className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Nhóm độ tuổi <span className="text-rose-500">*</span>
-              </Label>
-              <Select
-                {...register("Age", { valueAsNumber: true })}
-                className="w-full min-h-[44px]"
-              >
-                {CDC_AGE_OPTIONS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </Select>
-              {errors.Age?.message && (
-                <p className="text-[11px] text-rose-500">{String(errors.Age.message)}</p>
+            {/* Nhóm tuổi CDC BRFSS - Chuẩn Shadcn UI Select */}
+            <Controller
+              name="Age"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    Nhóm độ tuổi <span className="text-rose-500">*</span>
+                  </Label>
+                  <Select
+                    value={field.value ? String(field.value) : ""}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                  >
+                    <SelectTrigger className="w-full min-h-[44px]">
+                      <SelectValue placeholder="Chọn nhóm độ tuổi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CDC_AGE_OPTIONS.map((item) => (
+                        <SelectItem key={item.value} value={String(item.value)}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.Age?.message && (
+                    <p className="text-[11px] text-rose-500">{String(errors.Age.message)}</p>
+                  )}
+                </div>
               )}
-            </div>
+            />
 
-            {/* Trình độ học vấn */}
-            <div className="space-y-1.5">
-              <Label className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Trình độ học vấn
-              </Label>
-              <Select
-                {...register("Education", { valueAsNumber: true })}
-                className="w-full min-h-[44px]"
-              >
-                {EDUCATION_OPTIONS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            {/* Trình độ học vấn - Chuẩn Shadcn UI Select */}
+            <Controller
+              name="Education"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    Trình độ học vấn
+                  </Label>
+                  <Select
+                    value={field.value ? String(field.value) : "4"}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                  >
+                    <SelectTrigger className="w-full min-h-[44px]">
+                      <SelectValue placeholder="Chọn trình độ học vấn" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EDUCATION_OPTIONS.map((item) => (
+                        <SelectItem key={item.value} value={String(item.value)}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            />
 
-            {/* Khung thu nhập */}
-            <div className="space-y-1.5">
-              <Label className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Khung thu nhập gia đình
-              </Label>
-              <Select
-                {...register("Income", { valueAsNumber: true })}
-                className="w-full min-h-[44px]"
-              >
-                {INCOME_OPTIONS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            {/* Khung thu nhập - Chuẩn Shadcn UI Select */}
+            <Controller
+              name="Income"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    Khung thu nhập gia đình
+                  </Label>
+                  <Select
+                    value={field.value ? String(field.value) : "5"}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                  >
+                    <SelectTrigger className="w-full min-h-[44px]">
+                      <SelectValue placeholder="Chọn khung thu nhập" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INCOME_OPTIONS.map((item) => (
+                        <SelectItem key={item.value} value={String(item.value)}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* 2. Thể trạng & Tính toán BMI thời gian thực */}
+      {/* 2. Thể trạng & Tính toán BMI thời gian thực (Kèm Stepper +/-) */}
       <Card>
         <CardContent className="p-4 sm:p-6 space-y-4">
           <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -131,28 +170,46 @@ export function ScreeningStep1Demographics({
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <MedicalInputField
-              id="height_cm"
-              type="number"
-              step="0.5"
-              label="Chiều cao (cm)"
-              required
-              icon={Ruler}
-              placeholder="Ví dụ: 170"
-              error={errors.height_cm?.message as string}
-              {...register("height_cm", { valueAsNumber: true })}
+            <Controller
+              name="height_cm"
+              control={control}
+              render={({ field }) => (
+                <NumberStepperInput
+                  id="height_cm"
+                  label="Chiều cao"
+                  unit="cm"
+                  min={50}
+                  max={250}
+                  step={0.5}
+                  icon={Ruler}
+                  placeholder="170"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.height_cm?.message as string}
+                  required
+                />
+              )}
             />
 
-            <MedicalInputField
-              id="weight_kg"
-              type="number"
-              step="0.5"
-              label="Cân nặng (kg)"
-              required
-              icon={Scale}
-              placeholder="Ví dụ: 65"
-              error={errors.weight_kg?.message as string}
-              {...register("weight_kg", { valueAsNumber: true })}
+            <Controller
+              name="weight_kg"
+              control={control}
+              render={({ field }) => (
+                <NumberStepperInput
+                  id="weight_kg"
+                  label="Cân nặng"
+                  unit="kg"
+                  min={20}
+                  max={300}
+                  step={0.5}
+                  icon={Scale}
+                  placeholder="65"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.weight_kg?.message as string}
+                  required
+                />
+              )}
             />
           </div>
 
