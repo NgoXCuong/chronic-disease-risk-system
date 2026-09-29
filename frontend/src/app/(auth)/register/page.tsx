@@ -88,10 +88,10 @@ export default function RegisterPage() {
 
           <div className="mb-6">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Đăng ký tài khoản
+              Đăng ký Hồ sơ Sức khỏe
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Khởi tạo hồ sơ sức khỏe cá nhân và thể trạng để phân tích nguy cơ AI
+              Khởi tạo hồ sơ cá nhân để lưu trữ chỉ số sinh hiệu và theo dõi nguy cơ bệnh mạn tính
             </p>
           </div>
 
@@ -111,7 +111,7 @@ export default function RegisterPage() {
               disabled={isSubmitting}
               className="w-full h-11 text-base font-semibold shadow-md gap-2"
             >
-              {isSubmitting ? "Đang tạo tài khoản..." : <>Hoàn tất Đăng ký <ArrowRight className="w-4 h-4" /></>}
+              {isSubmitting ? "Đang khởi tạo hồ sơ..." : <>Hoàn tất Đăng ký Hồ sơ <ArrowRight className="w-4 h-4" /></>}
             </Button>
           </form>
 
@@ -124,7 +124,7 @@ export default function RegisterPage() {
             </p>
             <div className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
               <ShieldCheck className="w-3.5 h-3.5 text-medical-600" />
-              Tự động kích hoạt phiên làm việc HttpOnly an toàn
+              Thông tin sức khỏe được mã hóa và bảo mật theo tiêu chuẩn an toàn y tế
             </div>
           </div>
         </div>

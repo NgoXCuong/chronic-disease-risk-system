@@ -6,18 +6,18 @@ export function AuthBrandingPanel() {
   const highlights = [
     {
       icon: Activity,
-      title: "5 Mô hình Sàng lọc Hiệu chuẩn",
-      desc: "Đánh giá nguy cơ Đái tháo đường, Tăng huyết áp, Tim mạch và Đột quỵ với ngưỡng tối ưu Youden's J.",
+      title: "5 Mô hình Sàng lọc Nguy cơ",
+      desc: "Đánh giá nguy cơ Đái tháo đường, Tăng huyết áp, Tim mạch và Đột quỵ dựa trên các tiêu chí dịch tễ học lâm sàng.",
     },
     {
       icon: BrainCircuit,
-      title: "Giải thích Minh bạch (XAI SHAP)",
-      desc: "Bóc tách định lượng từng yếu tố lối sống làm tăng hoặc giảm nguy cơ, xóa bỏ rào cản 'hộp đen AI'.",
+      title: "Giải thích Rõ ràng Yếu tố Sức khỏe",
+      desc: "Chỉ rõ từng chỉ số thể trạng và thói quen sinh hoạt đang làm tăng hoặc giảm nguy cơ bệnh của bạn.",
     },
     {
       icon: ShieldCheck,
-      title: "Bảo vệ Dữ liệu Y tế (PHI)",
-      desc: "Quản lý phiên đăng nhập qua HttpOnly Cookie an toàn, miễn nhiễm 100% với tấn công đánh cắp token XSS.",
+      title: "Bảo vệ Thông tin Sức khỏe Cá nhân",
+      desc: "Hồ sơ y tế và kết quả sàng lọc được mã hóa và bảo mật nghiêm ngặt, bảo vệ quyền riêng tư tuyệt đối cho người bệnh.",
     },
   ];
 
@@ -57,7 +57,7 @@ export function AuthBrandingPanel() {
         </h1>
 
         <p className="text-sm text-slate-300 leading-relaxed">
-          Ứng dụng các thuật toán Machine Learning tiên tiến đã hiệu chuẩn xác suất lâm sàng để cung cấp bức tranh toàn diện và khách quan về thể trạng của bạn.
+          Ứng dụng các mô hình học máy tiên tiến đã hiệu chuẩn xác suất y học để cung cấp bức tranh toàn diện và khách quan về thể trạng của bạn.
         </p>
 
         {/* 3 Medical Highlights */}

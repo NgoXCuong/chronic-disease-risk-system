@@ -57,17 +57,17 @@ function LoginForm() {
 
       <div className="mb-6">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-          Đăng nhập hệ thống
+          Đăng nhập Hệ thống Y tế
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Nhập thông tin xác thực để truy cập hồ sơ sức khỏe và kết quả AI
+          Truy cập hồ sơ cá nhân, lịch sử sàng lọc và nhận khuyến nghị sức khỏe chuyên sâu
         </p>
       </div>
 
       {sessionExpired && (
         <Alert variant="warning" className="mb-4">
           <AlertCircle className="w-4 h-4" />
-          <AlertDescription>Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.</AlertDescription>
+          <AlertDescription>Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.</AlertDescription>
         </Alert>
       )}
       {apiError && (
@@ -84,7 +84,7 @@ function LoginForm() {
           label="Địa chỉ Email"
           required
           icon={Mail}
-          placeholder="benhnhan@example.com"
+          placeholder="nguyenvana@gmail.com"
           error={errors.email?.message}
           {...register("email")}
         />
@@ -102,6 +102,7 @@ function LoginForm() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -114,7 +115,7 @@ function LoginForm() {
           disabled={isSubmitting}
           className="w-full h-11 text-base font-semibold shadow-md gap-2 mt-2"
         >
-          {isSubmitting ? "Đang xác thực..." : <>Đăng nhập <ArrowRight className="w-4 h-4" /></>}
+          {isSubmitting ? "Đang xác thực..." : <>Đăng nhập Hồ sơ <ArrowRight className="w-4 h-4" /></>}
         </Button>
       </form>
 
@@ -122,12 +123,12 @@ function LoginForm() {
         <p>
           Chưa có tài khoản?{" "}
           <Link href="/register" className="font-bold text-medical-600 dark:text-medical-400 hover:underline">
-            Đăng ký tài khoản mới
+            Đăng ký Hồ sơ Sức khỏe mới
           </Link>
         </p>
         <div className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
           <ShieldCheck className="w-3.5 h-3.5 text-medical-600" />
-          Bảo mật an toàn bằng HttpOnly Cookie y tế chống XSS
+          Thông tin đăng nhập và hồ sơ bệnh nhân được mã hóa bảo mật đa tầng
         </div>
       </div>
     </div>

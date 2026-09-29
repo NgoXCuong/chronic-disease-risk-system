@@ -28,14 +28,14 @@ export function RegisterVitalsSection({
     <div className="space-y-3.5 pt-2 border-t border-slate-200/80 dark:border-slate-800">
       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
         <Heart className="w-3.5 h-3.5 text-medical-600" />
-        2. Thông tin cá nhân &amp; Thể trạng ban đầu
+        2. Thông tin bệnh nhân &amp; Thể trạng ban đầu
       </h3>
 
       <MedicalInputField
         id="full_name"
         label="Họ và tên bệnh nhân"
         icon={User}
-        placeholder="Nguyễn Văn A"
+        placeholder="Ví dụ: Nguyễn Văn A"
         error={errors.full_name?.message as string}
         {...register("full_name")}
       />
@@ -54,9 +54,9 @@ export function RegisterVitalsSection({
           <Label htmlFor="gender">Giới tính sinh học</Label>
           <Select id="gender" {...register("gender")}>
             <option value="">Chọn giới tính sinh học</option>
-            <option value="MALE">Nam (Male)</option>
-            <option value="FEMALE">Nữ (Female)</option>
-            <option value="OTHER">Khác (Other)</option>
+            <option value="MALE">Nam giới</option>
+            <option value="FEMALE">Nữ giới</option>
+            <option value="OTHER">Khác</option>
           </Select>
         </div>
       </div>
@@ -68,7 +68,7 @@ export function RegisterVitalsSection({
           step="0.5"
           label="Chiều cao (cm)"
           icon={Ruler}
-          placeholder="Ví dụ: 170"
+          placeholder="Ví dụ: 168"
           error={errors.height_cm?.message as string}
           {...register("height_cm")}
         />
@@ -79,7 +79,7 @@ export function RegisterVitalsSection({
           step="0.5"
           label="Cân nặng (kg)"
           icon={Weight}
-          placeholder="Ví dụ: 65"
+          placeholder="Ví dụ: 62"
           error={errors.weight_kg?.message as string}
           {...register("weight_kg")}
         />
