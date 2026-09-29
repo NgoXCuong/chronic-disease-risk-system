@@ -129,3 +129,61 @@ async def test_auth_full_lifecycle():
         )
         assert res_logout.status_code == 200
         assert "Đăng xuất thành công" in res_logout.json()["message"]
+
+
+@pytest.mark.asyncio
+async def test_auth_httponly_cookies_lifecycle():
+    """
+    Kiểm thử tự động quy trình xác thực bằng HttpOnly Cookie (Chuẩn bảo mật Y tế - Trụ cột 2.5):
+    1. Đăng nhập -> Máy chủ tự động set HttpOnly cookies (access_token, refresh_token).
+    2. Gọi /api/v1/auth/me HOÀN TOÀN KHÔNG gửi Header Authorization, chỉ dùng Cookie -> 200 OK.
+    3. Cấp mới token (/refresh) HOÀN TOÀN KHÔNG gửi JSON body, chỉ dùng Cookie -> 200 OK.
+    4. Đăng xuất (/logout) xóa sạch cookies -> 200 OK.
+    """
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        cookie_email = f"cookie_{uuid.uuid4().hex[:8]}@example.com"
+        password = "Password123@"
+
+        # 1. Đăng ký tài khoản
+        res_reg = await client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": cookie_email,
+                "password": password,
+                "full_name": "Bệnh Nhân Cookie",
+            },
+        )
+        assert res_reg.status_code == 201
+
+        # 2. Đăng nhập và kiểm tra HttpOnly cookies
+        res_login = await client.post(
+            "/api/v1/auth/login",
+            json={"email": cookie_email, "password": password},
+        )
+        assert res_login.status_code == 200
+        cookies = res_login.cookies
+        assert "access_token" in cookies
+        assert "refresh_token" in cookies
+        assert "medrisk_logged_in" in cookies
+
+        access_token_cookie = cookies["access_token"]
+        refresh_token_cookie = cookies["refresh_token"]
+
+        # 3. Truy cập /me CHỈ bằng cookie, KHÔNG dùng header Authorization
+        client.cookies.set("access_token", access_token_cookie)
+        res_me = await client.get("/api/v1/auth/me")
+        assert res_me.status_code == 200
+        assert res_me.json()["email"] == cookie_email
+        assert res_me.json()["profile"]["full_name"] == "Bệnh Nhân Cookie"
+
+        # 4. Refresh token CHỈ bằng cookie
+        client.cookies.set("refresh_token", refresh_token_cookie)
+        res_refresh = await client.post("/api/v1/auth/refresh")
+        assert res_refresh.status_code == 200
+        assert "access_token" in res_refresh.cookies
+
+        # 5. Đăng xuất CHỈ bằng cookie
+        res_logout = await client.post("/api/v1/auth/logout")
+        assert res_logout.status_code == 200
+        assert "Đăng xuất thành công" in res_logout.json()["message"]

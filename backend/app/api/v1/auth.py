@@ -1,11 +1,15 @@
 from typing import Annotated, Optional
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 
 from app.core.database import get_async_db
-from app.core.security import get_current_user
+from app.core.security import (
+    clear_auth_cookies,
+    get_current_user,
+    set_auth_cookies,
+)
 from app.models.user import User
 from app.schemas.auth import (
     MessageResponse,
@@ -60,48 +64,79 @@ async def register(
     "/login",
     response_model=TokenResponse,
     summary="Đăng nhập tài khoản & Nhận JWT Tokens",
-    description="Xác thực email và mật khẩu, phát hành Access Token (15 phút) và Refresh Token (7 ngày)."
+    description="Xác thực email và mật khẩu, phát hành Access Token (15 phút) và Refresh Token (7 ngày), tự động thiết lập HttpOnly Cookies."
 )
 async def login(
     req: UserLoginRequest,
     request: Request,
+    response: Response,
     db: DatabaseSession
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
-    return await AuthService.login_user(db, req, ip_address, user_agent)
+    token_response = await AuthService.login_user(db, req, ip_address, user_agent)
+
+    # Thiết lập HttpOnly Cookies an toàn bảo vệ chống XSS
+    set_auth_cookies(response, token_response.access_token, token_response.refresh_token)
+    return token_response
 
 
 @router.post(
     "/refresh",
     response_model=TokenResponse,
     summary="Cấp mới Access Token (Refresh Token Rotation)",
-    description="Kiểm tra tính hợp lệ của Refresh Token, hủy token cũ và phát hành cặp Access Token + Refresh Token mới."
+    description="Kiểm tra tính hợp lệ của Refresh Token (nhận từ HttpOnly cookie hoặc JSON body), hủy token cũ và phát hành cặp token mới."
 )
 async def refresh_token(
-    req: RefreshTokenRequest,
     request: Request,
-    db: DatabaseSession
+    response: Response,
+    db: DatabaseSession,
+    req: Optional[RefreshTokenRequest] = None,
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
-    return await AuthService.rotate_refresh_token(db, req.refresh_token, ip_address, user_agent)
+
+    # Ưu tiên lấy từ JSON body, fallback sang HttpOnly cookie
+    raw_token = (req.refresh_token if req and req.refresh_token else None) or request.cookies.get("refresh_token")
+    if not raw_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Không tìm thấy Refresh Token (trong JSON body hoặc HttpOnly cookie).",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token_response = await AuthService.rotate_refresh_token(db, raw_token, ip_address, user_agent)
+
+    # Cập nhật HttpOnly Cookies mới
+    set_auth_cookies(response, token_response.access_token, token_response.refresh_token)
+    return token_response
 
 
 @router.post(
     "/logout",
     response_model=MessageResponse,
     summary="Đăng xuất khỏi hệ thống",
-    description="Hủy và thu hồi (revoke) Refresh Token hiện tại để kết thúc phiên làm việc an toàn. Không bắt buộc phải có Access Token."
+    description="Hủy và thu hồi (revoke) Refresh Token hiện tại, xóa sạch HttpOnly cookies để kết thúc phiên an toàn."
 )
 async def logout(
-    req: RefreshTokenRequest,
     request: Request,
+    response: Response,
     db: DatabaseSession,
+    req: Optional[RefreshTokenRequest] = None,
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
-    await AuthService.logout_user(db, req.refresh_token, ip_address, user_agent)
+
+    # Lấy token từ JSON body hoặc cookie
+    raw_token = (req.refresh_token if req and req.refresh_token else None) or request.cookies.get("refresh_token")
+    if raw_token:
+        try:
+            await AuthService.logout_user(db, raw_token, ip_address, user_agent)
+        except Exception:
+            pass  # Nếu token đã hết hạn hoặc không hợp lệ vẫn đảm bảo xóa cookie phía client
+
+    # Xóa sạch toàn bộ cookies xác thực
+    clear_auth_cookies(response)
     return MessageResponse(message="Đăng xuất thành công. Phiên làm việc đã kết thúc an toàn.")
 
 
@@ -130,10 +165,12 @@ async def get_current_user_info(
 async def change_password(
     req: PasswordChangeRequest,
     request: Request,
+    response: Response,
     current_user: CurrentUser,
     db: DatabaseSession
 ):
     ip_address = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
     await AuthService.change_password(db, current_user, req, ip_address, user_agent)
+    clear_auth_cookies(response)
     return MessageResponse(message="Đổi mật khẩu thành công. Vui lòng đăng nhập lại trên các thiết bị.")

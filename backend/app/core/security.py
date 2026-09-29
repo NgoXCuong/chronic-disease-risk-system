@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, Request, Response, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,8 +15,8 @@ from app.core.database import get_async_db
 from app.models.enums import UserRole
 from app.models.user import User
 
-# Khởi tạo lược đồ xác thực HTTP Bearer
-bearer_scheme = HTTPBearer(auto_error=True)
+# Khởi tạo lược đồ xác thực HTTP Bearer (auto_error=False để hỗ trợ fallback sang HttpOnly Cookie)
+bearer_scheme = HTTPBearer(auto_error=False)
 optional_bearer_scheme = HTTPBearer(auto_error=False)
 
 
@@ -106,14 +106,28 @@ def decode_token(token: str) -> Dict[str, Any]:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Security(bearer_scheme),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
     db: AsyncSession = Depends(get_async_db)
 ) -> User:
     """
     Dependency bảo mật của FastAPI:
-    Trích xuất Bearer token, giải mã payload JWT, xác minh sự tồn tại và trạng thái kích hoạt của người dùng.
+    Trích xuất token từ Authorization Bearer header HOẶC từ HttpOnly cookie 'access_token',
+    giải mã payload JWT, xác minh sự tồn tại và trạng thái kích hoạt của người dùng.
     """
-    token = credentials.credentials
+    token: Optional[str] = None
+    if credentials and credentials.credentials:
+        token = credentials.credentials
+    elif "access_token" in request.cookies:
+        token = request.cookies.get("access_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Chưa cung cấp thông tin xác thực (thiếu Bearer token hoặc cookie access_token).",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     payload = decode_token(token)
 
     if payload.get("type") != "access":
@@ -160,19 +174,25 @@ async def get_current_user(
 
 
 async def get_optional_current_user(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Security(optional_bearer_scheme),
     db: AsyncSession = Depends(get_async_db)
 ) -> Optional[User]:
     """
     Dependency bảo mật tùy chọn:
-    Nếu có Authorization Bearer header, tiến hành giải mã token và trả về User.
-    Nếu không có token hoặc token không hợp lệ/hết hạn, trả về None thay vì quăng lỗi 401.
+    Nếu có Bearer header hoặc cookie access_token, giải mã và trả về User.
+    Nếu không có token hoặc token không hợp lệ, trả về None thay vì quăng lỗi 401.
     """
-    if not credentials or not credentials.credentials:
+    token: Optional[str] = None
+    if credentials and credentials.credentials:
+        token = credentials.credentials
+    elif "access_token" in request.cookies:
+        token = request.cookies.get("access_token")
+
+    if not token:
         return None
 
     try:
-        token = credentials.credentials
         payload = decode_token(token)
         if payload.get("type") != "access":
             return None
@@ -189,6 +209,61 @@ async def get_optional_current_user(
         return user
     except Exception:
         return None
+
+
+def set_auth_cookies(
+    response: Response,
+    access_token: str,
+    refresh_token: str,
+) -> None:
+    """
+    Thiết lập cặp HttpOnly Cookie an toàn cho trình duyệt:
+    - access_token: HttpOnly, Path=/, thời hạn ngắn (15 phút)
+    - refresh_token: HttpOnly, Path=/, thời hạn dài (7 ngày)
+    - medrisk_logged_in: Cookie không-HttpOnly để Next.js Middleware hoặc client nhận biết trạng thái đăng nhập
+    """
+    is_prod = settings.ENVIRONMENT == "production"
+
+    # 1. Access Token HttpOnly Cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        httponly=True,
+        samesite="lax",
+        secure=is_prod,
+        path="/",
+    )
+    # 2. Refresh Token HttpOnly Cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        httponly=True,
+        samesite="lax",
+        secure=is_prod,
+        path="/",
+    )
+    # 3. Client state flag cookie (chỉ là cờ boolean cho Middleware kiểm tra nhanh)
+    response.set_cookie(
+        key="medrisk_logged_in",
+        value="true",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        httponly=False,
+        samesite="lax",
+        secure=is_prod,
+        path="/",
+    )
+
+
+def clear_auth_cookies(response: Response) -> None:
+    """
+    Xóa sạch toàn bộ cookies xác thực khi người dùng đăng xuất.
+    """
+    response.delete_cookie(key="access_token", path="/", samesite="lax")
+    response.delete_cookie(key="refresh_token", path="/", samesite="lax")
+    response.delete_cookie(key="medrisk_logged_in", path="/", samesite="lax")
+    response.delete_cookie(key="medrisk_token", path="/", samesite="lax")
 
 
 def require_roles(allowed_roles: List[UserRole]):

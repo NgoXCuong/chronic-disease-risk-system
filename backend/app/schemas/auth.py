@@ -48,8 +48,8 @@ class TokenResponse(BaseModel):
 
 
 class RefreshTokenRequest(BaseModel):
-    """Request payload for rotating a Refresh Token."""
-    refresh_token: str = Field(..., description="Mã Refresh Token hiện tại cần cấp mới")
+    """Request payload for rotating a Refresh Token (hỗ trợ cả JSON body hoặc đọc từ HttpOnly Cookie)."""
+    refresh_token: Optional[str] = Field(None, description="Mã Refresh Token hiện tại cần cấp mới")
 
 
 class PasswordChangeRequest(BaseModel):
