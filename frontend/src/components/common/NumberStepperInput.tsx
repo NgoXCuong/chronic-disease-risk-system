@@ -10,11 +10,12 @@ interface NumberStepperInputProps {
   label: string;
   unit: string;
   value?: number | string;
-  onChange: (val: number) => void;
+  onChange: (val: any) => void;
   min?: number;
   max?: number;
   step?: number;
   placeholder?: string;
+  defaultValue?: number;
   icon?: LucideIcon;
   error?: string;
   required?: boolean;
@@ -31,29 +32,74 @@ export function NumberStepperInput({
   max = 999,
   step = 0.5,
   placeholder = "0",
+  defaultValue,
   icon: Icon,
   error,
   required,
   className,
 }: NumberStepperInputProps) {
-  const numericValue = typeof value === "number" ? value : Number(value) || 0;
+  // Kiểm tra xem người dùng đã có giá trị thực hay chưa
+  const hasValue =
+    value !== undefined &&
+    value !== null &&
+    value !== "" &&
+    !isNaN(Number(value));
+
+  const currentVal = hasValue ? Number(value) : null;
+
+  // Xác định mốc khởi đầu thông minh khi ô còn trống
+  const parsedPlaceholder = Number(placeholder);
+  const fallbackBase =
+    defaultValue ??
+    (!isNaN(parsedPlaceholder) && parsedPlaceholder > 0
+      ? parsedPlaceholder
+      : min > 0
+      ? min
+      : 0);
+
+  // Điều kiện vô hiệu hóa nút Giảm [-]
+  // Khi chưa nhập, nếu fallbackBase > min (ví dụ chiều cao 168 > 50) thì KHÔNG vô hiệu hóa
+  const isDecreaseDisabled = hasValue
+    ? currentVal !== null && currentVal <= min
+    : fallbackBase <= min;
+
+  // Điều kiện vô hiệu hóa nút Tăng [+]
+  const isIncreaseDisabled = hasValue
+    ? currentVal !== null && currentVal >= max
+    : fallbackBase >= max;
 
   const handleDecrease = (e: React.MouseEvent) => {
     e.preventDefault();
-    const next = Math.max(Number((numericValue - step).toFixed(1)), min);
-    onChange(next);
+    if (isDecreaseDisabled) return;
+
+    if (hasValue && currentVal !== null) {
+      const next = Math.max(Number((currentVal - step).toFixed(1)), min);
+      onChange(next);
+    } else {
+      // Khi chưa có giá trị, giảm từ mốc gợi ý
+      const next = Math.max(Number((fallbackBase - step).toFixed(1)), min);
+      onChange(next);
+    }
   };
 
   const handleIncrease = (e: React.MouseEvent) => {
     e.preventDefault();
-    const next = Math.min(Number((numericValue + step).toFixed(1)), max);
-    onChange(next);
+    if (isIncreaseDisabled) return;
+
+    if (hasValue && currentVal !== null) {
+      const next = Math.min(Number((currentVal + step).toFixed(1)), max);
+      onChange(next);
+    } else {
+      // Khi chưa có giá trị, tăng từ mốc gợi ý
+      const next = Math.min(Number((fallbackBase + step).toFixed(1)), max);
+      onChange(next);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     if (raw === "") {
-      onChange(0);
+      onChange("" as any);
       return;
     }
     const val = parseFloat(raw);
@@ -73,7 +119,7 @@ export function NumberStepperInput({
         <button
           type="button"
           onClick={handleDecrease}
-          disabled={numericValue <= min}
+          disabled={isDecreaseDisabled}
           className="w-11 h-11 flex items-center justify-center text-slate-500 hover:text-medical-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-l-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-none"
           aria-label={`Giảm ${label}`}
         >
@@ -91,7 +137,7 @@ export function NumberStepperInput({
             step={step}
             min={min}
             max={max}
-            value={numericValue === 0 ? "" : numericValue}
+            value={hasValue && currentVal !== null ? currentVal : ""}
             placeholder={placeholder}
             onChange={handleInputChange}
             className={cn(
@@ -99,7 +145,7 @@ export function NumberStepperInput({
               Icon ? "pl-7" : "px-2"
             )}
           />
-          {/* Huy hiệu đơn vị (cm / kg) */}
+          {/* Huy hiệu đơn vị (cm / kg / ngày) */}
           <span className="absolute right-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase pointer-events-none">
             {unit}
           </span>
@@ -109,7 +155,7 @@ export function NumberStepperInput({
         <button
           type="button"
           onClick={handleIncrease}
-          disabled={numericValue >= max}
+          disabled={isIncreaseDisabled}
           className="w-11 h-11 flex items-center justify-center text-slate-500 hover:text-medical-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-r-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-none"
           aria-label={`Tăng ${label}`}
         >
