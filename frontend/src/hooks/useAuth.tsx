@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { authApi } from "@/lib/api/auth";
 import {
   TokenResponse,
   User,
@@ -40,11 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const res = await api.get<User>("/auth/me");
-      setUser(res.data);
+      const data = await authApi.getMe();
+      setUser(data);
       setError(null);
     } catch (err: any) {
-      // Nếu chưa có phiên đăng nhập hoặc cookie hết hạn
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -60,11 +59,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      await api.post<TokenResponse>("/auth/login", credentials);
+      await authApi.login(credentials);
 
       // Lấy thông tin user ngay sau khi cookie được trình duyệt thiết lập
-      const userRes = await api.get<User>("/auth/me");
-      setUser(userRes.data);
+      const data = await authApi.getMe();
+      setUser(data);
     } catch (err: any) {
       const msg =
         err?.response?.data?.detail ||
@@ -81,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      await api.post("/auth/register", data);
+      await authApi.register(data);
 
       // Tự động đăng nhập ngay sau khi đăng ký thành công
       await login({ email: data.email, password: data.password });
@@ -99,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Đăng xuất: Yêu cầu server thu hồi refresh token và xóa sạch HttpOnly cookies
   const logout = async (): Promise<void> => {
     try {
-      await api.post("/auth/logout");
+      await authApi.logout();
     } catch (err) {
       console.warn("Lỗi khi gọi API đăng xuất:", err);
     } finally {

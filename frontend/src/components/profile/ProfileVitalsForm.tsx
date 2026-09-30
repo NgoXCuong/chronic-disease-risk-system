@@ -21,7 +21,7 @@ import { MedicalInputField } from "@/components/common/MedicalInputField";
 import { MedicalDatePicker } from "@/components/common/MedicalDatePicker";
 import { NumberStepperInput } from "@/components/common/NumberStepperInput";
 import { BMICalculatorCard } from "@/components/common/BMICalculatorCard";
-import api from "@/lib/api";
+import { usersApi } from "@/lib/api/users";
 
 const vitalsSchema = z.object({
   full_name: z.string().max(150).optional(),
@@ -64,7 +64,7 @@ export function ProfileVitalsForm({ initialData, onSuccess }: ProfileVitalsFormP
     try {
       setError(null);
       setSuccess(null);
-      await api.put("/users/profile", {
+      await usersApi.updateProfile({
         full_name: values.full_name || null,
         date_of_birth: values.date_of_birth || null,
         gender: values.gender || null,

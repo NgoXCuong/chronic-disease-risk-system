@@ -14,7 +14,7 @@ import { RecommendationsList } from "@/components/screening/RecommendationsList"
 import { MedicalDisclaimer } from "@/components/common/MedicalDisclaimer";
 import { ResultHeader } from "@/components/screening/result/ResultHeader";
 import { ResultDiseaseTabs } from "@/components/screening/result/ResultDiseaseTabs";
-import api from "@/lib/api";
+import { screeningApi } from "@/lib/api/screening";
 import { RiskLevel } from "@/types/screening";
 
 // Dynamic import Recharts component theo Trụ cột 3 để tối ưu bundle size
@@ -67,8 +67,8 @@ function ScreeningResultContent() {
       try {
         setLoading(true);
         setError(null);
-        const res = await api.get(`/screening/history/${recordId}`);
-        setRecord(res.data);
+        const data = await screeningApi.getHistoryById(recordId);
+        setRecord(data);
       } catch (err: any) {
         setError(err.message || "Không thể tải kết quả phân tích AI từ máy chủ.");
       } finally {

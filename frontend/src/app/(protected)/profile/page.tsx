@@ -9,7 +9,7 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileVitalsForm } from "@/components/profile/ProfileVitalsForm";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
+import { usersApi } from "@/lib/api/users";
 
 export default function ProfilePage() {
   const { user, refreshProfile } = useAuth();
@@ -19,8 +19,8 @@ export default function ProfilePage() {
   const fetchProfile = React.useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.get("/users/profile");
-      setProfileData(res.data);
+      const data = await usersApi.getProfile();
+      setProfileData(data);
     } catch (err) {
       console.warn("Lỗi tải hồ sơ:", err);
     } finally {

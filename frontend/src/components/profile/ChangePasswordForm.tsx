@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MedicalInputField } from "@/components/common/MedicalInputField";
-import { api } from "@/lib/api";
+import { authApi } from "@/lib/api/auth";
 
 const passwordSchema = z
   .object({
@@ -47,7 +47,7 @@ export function ChangePasswordForm() {
     try {
       setError(null);
       setSuccess(null);
-      await api.post("/auth/change-password", {
+      await authApi.changePassword({
         current_password: values.current_password,
         new_password: values.new_password,
       });

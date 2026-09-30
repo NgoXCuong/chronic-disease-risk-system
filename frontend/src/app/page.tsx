@@ -5,7 +5,7 @@ import { Navbar } from "@/components/common/Navbar";
 import { MedicalDisclaimer } from "@/components/common/MedicalDisclaimer";
 import { HomeHeroSection } from "@/components/home/HomeHeroSection";
 import { HomeModelsSection } from "@/components/home/HomeModelsSection";
-import { api, getLoadedModels } from "@/lib/api";
+import { screeningApi } from "@/lib/api/screening";
 import { LoadedModel } from "@/types/screening";
 
 export default function HomePage() {
@@ -18,7 +18,7 @@ export default function HomePage() {
       try {
         setLoading(true);
         // Nạp dữ liệu mô hình thực tế từ Backend (kèm In-Memory Cache)
-        const data = await getLoadedModels();
+        const data = await screeningApi.getModels();
         setModels(data);
       } catch (err: any) {
         console.warn("Lỗi tải thông tin mô hình từ Backend:", err?.response?.data || err.message);

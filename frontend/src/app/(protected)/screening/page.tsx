@@ -14,7 +14,7 @@ import { ScreeningStep2Conditions } from "@/components/screening/ScreeningStep2C
 import { ScreeningStep3Clinical } from "@/components/screening/ScreeningStep3Clinical";
 import { DisclaimerModal } from "@/components/screening/DisclaimerModal";
 import { useAuth } from "@/hooks/useAuth";
-import api from "@/lib/api";
+import { screeningApi } from "@/lib/api/screening";
 import {
   buildScreeningPayloads,
   getScreeningDefaultValues,
@@ -91,15 +91,14 @@ export default function ScreeningWizardPage() {
       const { lifestylePayload, clinicalPayload } = buildScreeningPayloads(values);
 
       // 1. Gửi phân tích toàn diện 4 mô hình Tầng 1
-      const res = await api.post("/screening/comprehensive", lifestylePayload);
-      const comprehensiveResults = res.data;
+      const comprehensiveResults = await screeningApi.predictComprehensive(lifestylePayload);
 
       const firstKey = Object.keys(comprehensiveResults)[0];
-      const recordId = comprehensiveResults[firstKey]?.record_id;
+      const recordId = (comprehensiveResults as any)[firstKey]?.record_id;
 
       // 2. Gửi phân tích lâm sàng Tầng 2 nếu kích hoạt
       if (clinicalPayload) {
-        await api.post("/screening/predict/clinical/diabetes", clinicalPayload);
+        await screeningApi.predictClinicalDiabetes(clinicalPayload);
       }
 
       setModalOpen(false);
