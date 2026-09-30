@@ -50,7 +50,7 @@ export function AIModelsGrid({ loading, models }: AIModelsGridProps) {
               </CardHeader>
               <CardContent className="pt-0 text-xs text-slate-600 dark:text-slate-400 space-y-2">
                 <div className="flex justify-between py-1 border-t border-slate-100 dark:border-slate-800">
-                  <span>Ngưỡng phân loại Youden&apos;s J:</span>
+                  <span>Ngưỡng cảnh báo lâm sàng:</span>
                   <strong className="text-slate-900 dark:text-slate-200">
                     {(m.optimal_threshold * 100).toFixed(1)}%
                   </strong>

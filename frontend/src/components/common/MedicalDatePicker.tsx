@@ -3,12 +3,19 @@
 import * as React from "react";
 import { Calendar } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface MedicalDatePickerProps {
   id?: string;
   label: string;
-  value?: string; // YYYY-MM-DD
+  value?: string; // Định dạng YYYY-MM-DD
   onChange: (dateStr: string) => void;
   error?: string;
   required?: boolean;
@@ -24,21 +31,10 @@ export function MedicalDatePicker({
   required,
   className,
 }: MedicalDatePickerProps) {
-  // Phân rã giá trị YYYY-MM-DD hiện tại
-  const [year, setYear] = React.useState<string>(() => {
-    if (value && value.includes("-")) return value.split("-")[0];
-    return "";
-  });
-  const [month, setMonth] = React.useState<string>(() => {
-    if (value && value.includes("-")) return value.split("-")[1];
-    return "";
-  });
-  const [day, setDay] = React.useState<string>(() => {
-    if (value && value.includes("-")) return value.split("-")[2];
-    return "";
-  });
+  const [year, setYear] = React.useState<string>(() => (value ? value.split("-")[0] || "" : ""));
+  const [month, setMonth] = React.useState<string>(() => (value ? value.split("-")[1] || "" : ""));
+  const [day, setDay] = React.useState<string>(() => (value ? value.split("-")[2] || "" : ""));
 
-  // Đồng bộ lại khi props value thay đổi từ bên ngoài
   React.useEffect(() => {
     if (value && value.includes("-")) {
       const parts = value.split("-");
@@ -54,16 +50,14 @@ export function MedicalDatePicker({
     setYear(newYear);
 
     if (newDay && newMonth && newYear) {
-      const formatted = `${newYear}-${newMonth.padStart(2, "0")}-${newDay.padStart(2, "0")}`;
-      onChange(formatted);
+      onChange(`${newYear}-${newMonth.padStart(2, "0")}-${newDay.padStart(2, "0")}`);
     } else {
       onChange("");
     }
   };
 
-  // Tạo danh sách ngày, tháng, năm phù hợp cho hồ sơ y tế (từ năm hiện tại lùi 105 năm)
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 105 }, (_, i) => currentYear - i);
+  const years = Array.from({ length: 105 }, (_, i) => String(currentYear - i));
   const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
   const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
 
@@ -75,50 +69,47 @@ export function MedicalDatePicker({
       </Label>
 
       <div className="grid grid-cols-3 gap-2">
-        {/* Chọn Ngày (01 - 31) */}
-        <select
-          value={day}
-          onChange={(e) => updateDate(e.target.value, month, year)}
-          className="h-11 rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 transition-colors"
-          aria-label="Chọn ngày sinh"
-        >
-          <option value="">Ngày</option>
-          {days.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
+        {/* Chọn Ngày (01 - 31) - Chuẩn Shadcn UI */}
+        <Select value={day} onValueChange={(val) => updateDate(val, month, year)}>
+          <SelectTrigger className="h-11">
+            <SelectValue placeholder="Ngày" />
+          </SelectTrigger>
+          <SelectContent className="max-h-56">
+            {days.map((d) => (
+              <SelectItem key={d} value={d}>
+                {d}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        {/* Chọn Tháng (01 - 12) */}
-        <select
-          value={month}
-          onChange={(e) => updateDate(day, e.target.value, year)}
-          className="h-11 rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 transition-colors"
-          aria-label="Chọn tháng sinh"
-        >
-          <option value="">Tháng</option>
-          {months.map((m) => (
-            <option key={m} value={m}>
-              Tháng {m}
-            </option>
-          ))}
-        </select>
+        {/* Chọn Tháng (01 - 12) - Chuẩn Shadcn UI */}
+        <Select value={month} onValueChange={(val) => updateDate(day, val, year)}>
+          <SelectTrigger className="h-11">
+            <SelectValue placeholder="Tháng" />
+          </SelectTrigger>
+          <SelectContent className="max-h-56">
+            {months.map((m) => (
+              <SelectItem key={m} value={m}>
+                Tháng {m}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        {/* Chọn Năm (1920 - Hiện tại) */}
-        <select
-          value={year}
-          onChange={(e) => updateDate(day, month, e.target.value)}
-          className="h-11 rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 transition-colors"
-          aria-label="Chọn năm sinh"
-        >
-          <option value="">Năm</option>
-          {years.map((y) => (
-            <option key={y} value={String(y)}>
-              {y}
-            </option>
-          ))}
-        </select>
+        {/* Chọn Năm (1920 - Hiện tại) - Chuẩn Shadcn UI */}
+        <Select value={year} onValueChange={(val) => updateDate(day, month, val)}>
+          <SelectTrigger className="h-11">
+            <SelectValue placeholder="Năm" />
+          </SelectTrigger>
+          <SelectContent className="max-h-56">
+            {years.map((y) => (
+              <SelectItem key={y} value={y}>
+                {y}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {error && <p className="text-[11px] text-rose-500 font-medium">{error}</p>}

@@ -115,7 +115,7 @@ export function DashboardStatsGrid({
               </div>
               <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                Sẵn sàng suy luận thời gian thực (0ms I/O)
+                Sẵn sàng phân tích nguy cơ tức thì
               </div>
             </div>
           )}

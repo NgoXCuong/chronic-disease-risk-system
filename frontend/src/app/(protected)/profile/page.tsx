@@ -73,7 +73,7 @@ export default function ProfilePage() {
                   Quy định Bảo vệ Dữ liệu Y tế
                 </div>
                 <p className="leading-relaxed">
-                  Thông tin sức khỏe được bảo vệ nghiêm ngặt theo tiêu chuẩn phân quyền theo hàng (Row-level Security).
+                  Thông tin sức khỏe được bảo vệ nghiêm ngặt theo tiêu chuẩn bảo mật dữ liệu y tế và mã hóa an toàn.
                 </p>
               </div>
             </div>

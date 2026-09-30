@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface DisclaimerModalProps {
   open: boolean;
@@ -65,17 +66,23 @@ export function DisclaimerModal({
           </div>
         </div>
 
-        <label className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 select-none">
-          <input
-            type="checkbox"
+        <div
+          className="flex items-start gap-3 p-2.5 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850/60 select-none cursor-pointer transition-colors"
+          onClick={() => setAgreed(!agreed)}
+        >
+          <Checkbox
+            id="medical-consent"
             checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-            className="w-4 h-4 mt-0.5 rounded border-slate-300 text-medical-600 focus:ring-medical-500"
+            onCheckedChange={(checked) => setAgreed(checked === true)}
+            className="mt-0.5"
           />
-          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+          <label
+            htmlFor="medical-consent"
+            className="text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer leading-snug"
+          >
             Tôi đã đọc, hiểu rõ tuyên bố y tế và xác nhận các chỉ số cung cấp là chính xác để phân tích nguy cơ.
-          </span>
-        </label>
+          </label>
+        </div>
       </div>
 
       <DialogFooter>

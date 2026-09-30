@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, LayoutDashboard, LogOut, Menu, Stethoscope, User, X } from "lucide-react";
+import { ArrowRight, LayoutDashboard, LogOut, Menu, Stethoscope, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { NavMobileDrawer } from "@/components/common/NavMobileDrawer";
 import { useAuth } from "@/hooks/useAuth";
 
 export function Navbar() {
@@ -70,7 +71,6 @@ export function Navbar() {
 
         {/* Action Controls & Theme Toggle */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Light / Dark Mode Switcher */}
           <ThemeToggle />
 
           {/* Desktop Auth Controls */}
@@ -127,104 +127,14 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Drawer Navigation */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-200 bg-white px-4 py-4 space-y-3 dark:border-slate-800 dark:bg-slate-900 transition-colors">
-          <nav className="flex flex-col space-y-1">
-            <Link
-              href="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              Trang chủ
-            </Link>
-            <Link
-              href="/#features"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              5 Mô hình AI
-            </Link>
-
-            {isAuthenticated ? (
-              <>
-                <Link
-                  href="/screening"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Bắt đầu Khảo sát Nguy cơ
-                </Link>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Bảng điều khiển (Dashboard)
-                </Link>
-                <Link
-                  href="/history"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Lịch sử sàng lọc
-                </Link>
-                <Link
-                  href="/profile"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Hồ sơ cá nhân &amp; Nhân trắc
-                </Link>
-              </>
-            ) : (
-              <Link
-                href="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                Bắt đầu Khảo sát Nguy cơ
-              </Link>
-            )}
-          </nav>
-
-          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2">
-            {isAuthenticated && user ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300">
-                  <User className="w-4 h-4 text-medical-600 dark:text-medical-400" />
-                  <span className="truncate">{user.profile?.full_name || user.email}</span>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 text-rose-600 hover:text-rose-700 border-rose-200 dark:border-rose-900/60 dark:text-rose-400"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    logout();
-                  }}
-                >
-                  <LogOut className="w-4 h-4" />
-                  Đăng xuất
-                </Button>
-              </div>
-            ) : (
-              <>
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">
-                    Đăng nhập
-                  </Button>
-                </Link>
-                <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full gap-2">
-                    Đăng ký tài khoản
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Menu Drawer trên thiết bị di động */}
+      <NavMobileDrawer
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        isAuthenticated={isAuthenticated}
+        user={user}
+        logout={logout}
+      />
     </header>
   );
 }
