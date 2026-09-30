@@ -5,7 +5,7 @@ import { Navbar } from "@/components/common/Navbar";
 import { MedicalDisclaimer } from "@/components/common/MedicalDisclaimer";
 import { HomeHeroSection } from "@/components/home/HomeHeroSection";
 import { HomeModelsSection } from "@/components/home/HomeModelsSection";
-import { api } from "@/lib/api";
+import { api, getLoadedModels } from "@/lib/api";
 import { LoadedModel } from "@/types/screening";
 
 export default function HomePage() {
@@ -17,9 +17,9 @@ export default function HomePage() {
     async function fetchModels() {
       try {
         setLoading(true);
-        // Nạp dữ liệu mô hình thực tế từ Backend qua Axios client
-        const res = await api.get<LoadedModel[]>("/screening/models");
-        setModels(res.data);
+        // Nạp dữ liệu mô hình thực tế từ Backend (kèm In-Memory Cache)
+        const data = await getLoadedModels();
+        setModels(data);
       } catch (err: any) {
         console.warn("Lỗi tải thông tin mô hình từ Backend:", err?.response?.data || err.message);
         setError("Chưa kết nối được máy chủ AI backend. Vui lòng đảm bảo Backend FastAPI đang hoạt động.");

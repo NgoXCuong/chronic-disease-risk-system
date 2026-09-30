@@ -115,4 +115,27 @@ api.interceptors.response.use(
   }
 );
 
+// Cơ chế In-Memory Cache và Chống gọi trùng lặp (Request Deduplication) cho metadata mô hình AI
+let cachedModels: any[] | null = null;
+let modelsPromise: Promise<any[]> | null = null;
+
+export async function getLoadedModels(): Promise<any[]> {
+  if (cachedModels) return cachedModels;
+  if (modelsPromise) return modelsPromise;
+
+  modelsPromise = api
+    .get("/screening/models")
+    .then((res) => {
+      cachedModels = res.data;
+      modelsPromise = null;
+      return res.data;
+    })
+    .catch((err) => {
+      modelsPromise = null;
+      throw err;
+    });
+
+  return modelsPromise;
+}
+
 export default api;

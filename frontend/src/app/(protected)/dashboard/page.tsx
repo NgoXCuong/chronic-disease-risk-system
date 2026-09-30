@@ -11,7 +11,7 @@ import { DashboardStatsGrid } from "@/components/dashboard/DashboardStatsGrid";
 import { LatestScreeningCard } from "@/components/dashboard/LatestScreeningCard";
 import { AIModelsGrid } from "@/components/dashboard/AIModelsGrid";
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
+import { api, getLoadedModels } from "@/lib/api";
 import { LoadedModel } from "@/types/screening";
 
 export default function DashboardPage() {
@@ -21,24 +21,29 @@ export default function DashboardPage() {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
+    let isMounted = true;
     async function loadDashboardData() {
       try {
         setLoading(true);
         const [modelsRes, historyRes] = await Promise.allSettled([
-          api.get<LoadedModel[]>("/screening/models"),
+          getLoadedModels(),
           api.get("/screening/history?page=1&page_size=5"),
         ]);
 
-        if (modelsRes.status === "fulfilled") setModels(modelsRes.value.data);
+        if (!isMounted) return;
+        if (modelsRes.status === "fulfilled") setModels(modelsRes.value);
         if (historyRes.status === "fulfilled") setHistory(historyRes.value.data);
       } catch (err) {
-        console.warn("Lỗi tải dữ liệu Dashboard:", err);
+        if (isMounted) console.warn("Lỗi tải dữ liệu Dashboard:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
     loadDashboardData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const latestRecord = history?.records && history.records.length > 0 ? history.records[0] : null;
