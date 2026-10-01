@@ -158,37 +158,38 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+    <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col">
-        <div className="mb-4 flex items-center justify-between">
+      <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto p-3 sm:p-5 flex flex-col overflow-hidden">
+        <div className="mb-2 sm:mb-3 flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Bot className="w-7 h-7 text-teal-600" />
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Bot className="w-6 h-6 text-teal-600" />
               Trợ lý Y tế AI RAG
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-1">
               Tư vấn kết quả sàng lọc, phân tích chỉ số sinh hóa từ giấy khám bệnh và khuyến cáo lối sống
             </p>
           </div>
           <Button
             onClick={handleCreateSession}
             disabled={loading}
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl min-h-[44px] flex items-center gap-1.5 shadow-sm"
+            size="sm"
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl min-h-[40px] flex items-center gap-1.5 shadow-sm text-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Phiên mới
           </Button>
         </div>
 
         {/* Khung trò chuyện 2 cột */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[600px]">
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-4 gap-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
           {/* Cột trái: Danh sách phiên */}
-          <div className="hidden lg:flex flex-col border-r border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 p-3">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-2">
+          <div className="hidden lg:flex flex-col border-r border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 p-3 min-h-0 overflow-hidden">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-2 shrink-0">
               Lịch sử trao đổi ({sessions.length})
             </div>
-            <ScrollArea className="flex-1 pr-1">
+            <ScrollArea className="flex-1 min-h-0 pr-1">
               <div className="space-y-1.5">
                 {sessions.map((s) => (
                   <Button
@@ -212,29 +213,29 @@ export default function ChatPage() {
           </div>
 
           {/* Cột phải: Khung chat chính */}
-          <div className="lg:col-span-3 flex flex-col h-full bg-white dark:bg-slate-900">
+          <div className="lg:col-span-3 flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-slate-900">
             {/* Header chat */}
-            <div className="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-xs">
-                  <Bot className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-xs">
+                  <Bot className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <div className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                     Trợ lý Y tế AI (CDSS)
-                    <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800">
+                    <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 py-0">
                       Sẵn sàng
                     </Badge>
                   </div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                  <div className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-teal-600" />
-                    Căn cứ Hướng dẫn Chẩn đoán Bộ Y tế (QĐ 5481, QĐ 5904) & WHO
+                    Căn cứ Hướng dẫn Chẩn đoán Bộ Y tế & WHO
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Danh sách tin nhắn */}
+            {/* Danh sách tin nhắn có thanh cuộn mượt mà độc lập */}
             <ChatMessageList
               messages={messages}
               isLoading={sending || loading}
@@ -242,12 +243,12 @@ export default function ChatPage() {
             />
 
             {/* Khung nhập tin nhắn */}
-            <ChatInputForm onSendMessage={handleSendMessage} isLoading={sending || loading} />
+            <div className="shrink-0">
+              <ChatInputForm onSendMessage={handleSendMessage} isLoading={sending || loading} />
+            </div>
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

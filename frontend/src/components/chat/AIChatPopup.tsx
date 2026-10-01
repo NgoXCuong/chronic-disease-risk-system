@@ -80,7 +80,7 @@ export function AIChatPopup({ open, onClose, screeningResultId }: AIChatPopupPro
   return (
     <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[92vw] sm:w-[420px] h-[580px] max-h-[82vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
       {/* Header Widget */}
-      <div className="px-4 py-3 bg-gradient-to-r from-teal-700 to-teal-800 text-white flex items-center justify-between shadow-xs">
+      <div className="px-4 py-3 bg-gradient-to-r from-teal-700 to-teal-800 text-white flex items-center justify-between shadow-xs shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white backdrop-blur-xs">
             <Bot className="w-4 h-4" />
@@ -112,7 +112,9 @@ export function AIChatPopup({ open, onClose, screeningResultId }: AIChatPopupPro
 
       {/* Danh sách tin nhắn & Khung nhập */}
       <ChatMessageList messages={messages} isLoading={isLoading} citedSources={citedSources} />
-      <ChatInputForm onSendMessage={handleSendMessage} isLoading={isLoading} />
+      <div className="shrink-0">
+        <ChatInputForm onSendMessage={handleSendMessage} isLoading={isLoading} />
+      </div>
     </div>
   );
 }
