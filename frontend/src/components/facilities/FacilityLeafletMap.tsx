@@ -46,16 +46,11 @@ export default function FacilityLeafletMap({
       attributionControl: true,
     }).setView([userLocation.latitude, userLocation.longitude], 13);
 
-    // Sử dụng CartoDB Voyager tile server: tải nhanh, không bị chặn kết nối và hiển thị rõ địa danh Việt Nam
-    L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-      {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 19,
-      }
-    ).addTo(map);
+    // Sử dụng Google Maps raster tiles: không cần API key, không bị watermark, tải cực nhanh và hiển thị đầy đủ tên đường tiếng Việt
+    L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
+      maxZoom: 20,
+      attribution: "&copy; Google Maps / OpenStreetMap",
+    }).addTo(map);
 
     map.on("click", (e: L.LeafletMouseEvent) => {
       onMapClick?.({ latitude: e.latlng.lat, longitude: e.latlng.lng });

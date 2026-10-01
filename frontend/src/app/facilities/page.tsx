@@ -54,9 +54,6 @@ export default function FacilitiesPage() {
         limit: 30,
       });
       setFacilities(res.facilities);
-      if (res.facilities.length > 0 && !selectedFacility) {
-        setSelectedFacility(res.facilities[0]);
-      }
     } catch (e) {
       console.error("Lỗi khi tải cơ sở y tế:", e);
     } finally {
