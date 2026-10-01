@@ -65,7 +65,14 @@ export function LatestRiskOverview({ latestRecord }: Props) {
         {latestRecord.screened_diseases.map((d) => {
           const meta = DISEASE_META[d.disease] || { name: d.disease, icon: Activity, desc: "Bệnh lý mạn tính" };
           const badge = RISK_BADGE[d.risk_level] || RISK_BADGE.LOW;
-          const scorePercent = Math.round(d.score * 100);
+          const rawScore = typeof d.risk_percentage === "number" && !isNaN(d.risk_percentage)
+            ? d.risk_percentage
+            : typeof d.risk_score === "number" && !isNaN(d.risk_score)
+            ? d.risk_score * 100
+            : typeof d.score === "number" && !isNaN(d.score)
+            ? d.score * 100
+            : 0;
+          const scorePercent = Math.round(rawScore);
 
           return (
             <div key={d.disease} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between gap-3">

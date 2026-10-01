@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertCircle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ export function ScreeningWizard() {
     }
   }, [user, reset]);
 
-  // Điều hướng sang bước tiếp theo với kiểm duyệt dữ liệu từng bước
+  // Điều hướng sang bước tiếp theo kèm kiểm duyệt dữ liệu & tự động cuộn lên đầu
   const handleNextStep = async () => {
     if (currentStep === 1) {
       const valid = await trigger([
@@ -62,14 +62,27 @@ export function ScreeningWizard() {
         "Education",
         "Income",
       ]);
-      if (valid) setCurrentStep(2);
+      if (valid) {
+        setCurrentStep(2);
+        if (typeof window !== "undefined") {
+          window.scrollTo({ top: 120, behavior: "smooth" });
+        }
+      }
     } else if (currentStep === 2) {
       setCurrentStep(3);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 120, behavior: "smooth" });
+      }
     }
   };
 
   const handlePrevStep = () => {
-    if (currentStep > 1) setCurrentStep((prev) => prev - 1);
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 120, behavior: "smooth" });
+      }
+    }
   };
 
   // Xác nhận từ Disclaimer Dialog -> Gọi API suy luận 5 mô hình ML
@@ -100,7 +113,7 @@ export function ScreeningWizard() {
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      {/* Thanh Stepper 3 bước */}
+      {/* Thanh Stepper 3 bước cải tiến */}
       <ScreeningStepHeader currentStep={currentStep} />
 
       {/* Thông báo lỗi validation nếu có */}
@@ -109,13 +122,13 @@ export function ScreeningWizard() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle className="text-xs font-bold">Vui lòng kiểm tra lại dữ liệu</AlertTitle>
           <AlertDescription className="text-xs">
-            Một số trường thông tin chưa đạt tiêu chuẩn kiểm duyệt y tế. Hãy xem lại các ô báo đỏ.
+            Một số trường thông tin chưa đạt tiêu chuẩn y học. Hãy xem lại các ô có viền đỏ.
           </AlertDescription>
         </Alert>
       )}
 
       {/* Form nội dung theo từng bước */}
-      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 lg:p-10 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none">
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 lg:p-10 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/30 dark:shadow-none transition-all">
         {currentStep === 1 && (
           <Step1Demographics
             register={register}
@@ -148,30 +161,33 @@ export function ScreeningWizard() {
               type="button"
               variant="outline"
               onClick={handlePrevStep}
-              className="h-11 min-h-[44px] px-5 rounded-xl text-xs font-semibold gap-2 border-slate-200 dark:border-slate-800"
+              className="h-11 min-h-[44px] px-5 rounded-xl text-xs font-semibold gap-2 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <ArrowLeft className="h-4 w-4" /> Quay lại
             </Button>
           ) : (
-            <div />
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+              <ShieldCheck className="h-4 w-4 text-teal-600" />
+              <span>Dữ liệu được bảo mật y tế tuyệt đối</span>
+            </div>
           )}
 
           {currentStep < 3 ? (
             <Button
               type="button"
               onClick={handleNextStep}
-              className="h-11 min-h-[44px] px-6 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs gap-2 shadow-sm shadow-teal-600/20"
+              className="h-11 min-h-[44px] px-7 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs gap-2 shadow-sm shadow-teal-600/20"
             >
-              Tiếp tục <ArrowRight className="h-4 w-4" />
+              Tiếp tục bước {currentStep + 1} <ArrowRight className="h-4 w-4" />
             </Button>
           ) : (
             <Button
               type="button"
               onClick={() => setDialogOpen(true)}
-              className="h-11 min-h-[44px] px-6 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs gap-2 shadow-md shadow-teal-600/25 animate-pulse"
+              className="h-11 min-h-[44px] px-7 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs gap-2 shadow-md shadow-teal-600/25 hover:scale-[1.02] transition-transform"
             >
               <Sparkles className="h-4 w-4" />
-              Đánh giá Nguy cơ Bệnh
+              Phân tích Nguy cơ (5 Model ML)
             </Button>
           )}
         </div>

@@ -4,6 +4,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ChatFloatingButton } from "@/components/chat/ChatFloatingButton";
 
 const inter = Inter({ subsets: ["latin", "vietnamese"] });
 
@@ -26,6 +27,8 @@ export default function RootLayout({
             {children}
             {/* Thông báo nổi Sonner */}
             <Toaster position="top-right" richColors closeButton />
+            {/* Nút Trợ lý Y tế AI nổi cố định toàn ứng dụng */}
+            <ChatFloatingButton />
           </AuthProvider>
         </TooltipProvider>
       </body>

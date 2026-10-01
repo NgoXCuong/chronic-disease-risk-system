@@ -157,6 +157,7 @@ class RecordService:
                     "risk_level": sr.risk_level.value,
                     "risk_score": sr.risk_score,
                     "risk_percentage": sr.risk_percentage,
+                    "score": sr.risk_score,
                 })
 
             history_items.append(

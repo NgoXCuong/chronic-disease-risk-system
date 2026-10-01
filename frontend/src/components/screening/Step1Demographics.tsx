@@ -1,6 +1,6 @@
 import React from "react";
 import { UseFormRegister, FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { Ruler, Weight, Plus, Minus, Activity, GraduationCap, DollarSign } from "lucide-react";
+import { Ruler, Weight, Plus, Minus, User, UserCheck, GraduationCap, DollarSign, Calendar, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,40 @@ export function Step1Demographics({ register, errors, setValue, watch }: Props) 
 
   // Đánh giá thể trạng theo tiêu chuẩn châu Á (IDI & WPRO)
   const getBmiCategory = (val: number) => {
-    if (val < 18.5) return { label: "Thiếu cân", variant: "outline" as const, color: "text-amber-600 bg-amber-50" };
-    if (val < 23.0) return { label: "Thể trạng Lý tưởng", variant: "default" as const, color: "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40" };
-    if (val < 25.0) return { label: "Thừa cân (Tiền béo phì)", variant: "secondary" as const, color: "text-amber-800 bg-amber-50 dark:bg-amber-950/40" };
-    return { label: "Béo phì (Nguy cơ cao)", variant: "destructive" as const, color: "text-rose-700 bg-rose-50 dark:bg-rose-950/40" };
+    if (val < 18.5) {
+      return {
+        label: "Thiếu cân (< 18.5)",
+        color: "text-blue-700 dark:text-blue-400",
+        badgeBg: "bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800",
+        desc: "Thể trạng gầy, cần bổ sung dinh dưỡng.",
+        percent: Math.min(100, Math.max(0, ((val - 12) / (18.5 - 12)) * 25)),
+      };
+    }
+    if (val < 23.0) {
+      return {
+        label: "Thể trạng Lý tưởng (18.5 - 22.9)",
+        color: "text-emerald-700 dark:text-emerald-400",
+        badgeBg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800",
+        desc: "Cân đối, nguy cơ chuyển hóa thấp.",
+        percent: 25 + Math.min(25, Math.max(0, ((val - 18.5) / (23.0 - 18.5)) * 25)),
+      };
+    }
+    if (val < 25.0) {
+      return {
+        label: "Thừa cân (23.0 - 24.9)",
+        color: "text-amber-700 dark:text-amber-400",
+        badgeBg: "bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800",
+        desc: "Tiền béo phì, nên kiểm soát calo.",
+        percent: 50 + Math.min(25, Math.max(0, ((val - 23.0) / (25.0 - 23.0)) * 25)),
+      };
+    }
+    return {
+      label: "Béo phì (≥ 25.0)",
+      color: "text-rose-700 dark:text-rose-400",
+      badgeBg: "bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800",
+      desc: "Nguy cơ cao mắc tim mạch & tiểu đường.",
+      percent: Math.min(100, 75 + ((val - 25.0) / (35.0 - 25.0)) * 25),
+    };
   };
 
   const bmiCat = getBmiCategory(bmi);
@@ -54,52 +84,61 @@ export function Step1Demographics({ register, errors, setValue, watch }: Props) 
 
   return (
     <div className="space-y-6">
-      {/* Khối 1: Giới tính & Nhóm tuổi */}
+      {/* Khối 1: Giới tính sinh học & Nhóm tuổi */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Giới tính sinh học */}
-        <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Giới tính sinh học <span className="text-rose-500">*</span>
+        {/* Giới tính sinh học - Thiết kế thẻ tương tác 2 lựa chọn */}
+        <div className="space-y-2">
+          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+            <span>Giới tính sinh học <span className="text-rose-500">*</span></span>
+            <span className="text-[11px] text-slate-400 font-normal">Cố định từ khai sinh</span>
           </Label>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
               type="button"
-              variant={sexVal === 1 ? "default" : "outline"}
               onClick={() => setValue("Sex", 1, { shouldValidate: true })}
-              className={`h-11 min-h-[44px] rounded-xl font-semibold text-xs ${
-                sexVal === 1 ? "bg-teal-600 hover:bg-teal-700 text-white" : "border-slate-200 dark:border-slate-800"
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all min-h-[52px] ${
+                sexVal === 1
+                  ? "border-teal-600 bg-teal-50/60 dark:bg-teal-950/40 text-teal-800 dark:text-teal-200 shadow-sm"
+                  : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300"
               }`}
             >
-              Nam (Male)
-            </Button>
-            <Button
+              <span className="text-xs font-bold">Nam (Male)</span>
+              <span className="text-[10px] text-slate-400 mt-0.5">Giá trị nhãn: 1</span>
+            </button>
+            <button
               type="button"
-              variant={sexVal === 0 ? "default" : "outline"}
               onClick={() => setValue("Sex", 0, { shouldValidate: true })}
-              className={`h-11 min-h-[44px] rounded-xl font-semibold text-xs ${
-                sexVal === 0 ? "bg-teal-600 hover:bg-teal-700 text-white" : "border-slate-200 dark:border-slate-800"
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all min-h-[52px] ${
+                sexVal === 0
+                  ? "border-teal-600 bg-teal-50/60 dark:bg-teal-950/40 text-teal-800 dark:text-teal-200 shadow-sm"
+                  : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300"
               }`}
             >
-              Nữ (Female)
-            </Button>
+              <span className="text-xs font-bold">Nữ (Female)</span>
+              <span className="text-[10px] text-slate-400 mt-0.5">Giá trị nhãn: 0</span>
+            </button>
           </div>
         </div>
 
         {/* Nhóm độ tuổi */}
-        <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Độ tuổi hiện tại <span className="text-rose-500">*</span>
+        <div className="space-y-2">
+          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+            <span>Độ tuổi hiện tại <span className="text-rose-500">*</span></span>
+            <span className="text-[11px] text-slate-400 font-normal">Thang phân tầng CDC</span>
           </Label>
           <Select
             value={ageVal ? String(ageVal) : "4"}
             onValueChange={(val) => setValue("Age", Number(val), { shouldValidate: true })}
           >
-            <SelectTrigger className="h-11 min-h-[44px] rounded-xl border-slate-200 dark:border-slate-800">
-              <SelectValue placeholder="Chọn nhóm tuổi" />
+            <SelectTrigger className="h-[52px] min-h-[44px] rounded-2xl border-slate-200 dark:border-slate-800 px-3.5">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-teal-600 shrink-0" />
+                <SelectValue placeholder="Chọn nhóm tuổi" />
+              </div>
             </SelectTrigger>
             <SelectContent>
               {CDC_AGE_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={String(opt.value)}>
+                <SelectItem key={opt.value} value={String(opt.value)} className="text-xs py-2">
                   {opt.label}
                 </SelectItem>
               ))}
@@ -108,131 +147,150 @@ export function Step1Demographics({ register, errors, setValue, watch }: Props) 
         </div>
       </div>
 
-      {/* Khối 2: Chiều cao & Cân nặng (Tích hợp Stepper Shadcn) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Chiều cao */}
-        <div className="space-y-1.5">
-          <Label htmlFor="height_cm" className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Chiều cao đứng (cm) <span className="text-rose-500">*</span>
-          </Label>
-          <div className="relative">
-            <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              id="height_cm"
-              type="number"
-              step="0.5"
-              className="pl-9 pr-16 h-11 min-h-[44px] rounded-xl border-slate-200 dark:border-slate-800"
-              {...register("height_cm", { valueAsNumber: true })}
-            />
-            <div className="flex items-center gap-0.5 absolute right-1.5 top-1/2 -translate-y-1/2 z-20">
+      {/* Khối 2: Chiều cao & Cân nặng (Chỉ số cơ thể) */}
+      <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Chỉ số Nhân trắc học & Thể trạng
+          </h4>
+          <span className="text-[11px] text-slate-500 flex items-center gap-1">
+            <Info className="h-3 w-3" /> Tự động tính chỉ số BMI
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Chiều cao */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Ruler className="h-3.5 w-3.5 text-teal-600" />
+              Chiều cao (cm) <span className="text-rose-500">*</span>
+            </Label>
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={() => adjustValue("height_cm", -1, 50, 250, 165)}
-                className="h-8 w-7 text-slate-500 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg"
+                className="h-11 w-11 shrink-0 rounded-xl border-slate-200 dark:border-slate-800 hover:bg-slate-100"
               >
-                <Minus className="h-3.5 w-3.5" />
+                <Minus className="h-4 w-4" />
               </Button>
+              <Input
+                type="number"
+                step="0.5"
+                {...register("height_cm", { valueAsNumber: true })}
+                className="h-11 rounded-xl text-center font-bold text-sm border-slate-200 dark:border-slate-800"
+              />
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={() => adjustValue("height_cm", 1, 50, 250, 165)}
-                className="h-8 w-7 text-slate-500 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg"
+                className="h-11 w-11 shrink-0 rounded-xl border-slate-200 dark:border-slate-800 hover:bg-slate-100"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
+            {errors.height_cm && (
+              <p className="text-[11px] text-rose-500">{errors.height_cm.message}</p>
+            )}
           </div>
-          {errors.height_cm && (
-            <p className="text-xs text-rose-500 font-medium">{errors.height_cm.message}</p>
-          )}
+
+          {/* Cân nặng */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Weight className="h-3.5 w-3.5 text-teal-600" />
+              Cân nặng (kg) <span className="text-rose-500">*</span>
+            </Label>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => adjustValue("weight_kg", -0.5, 20, 300, 60)}
+                className="h-11 w-11 shrink-0 rounded-xl border-slate-200 dark:border-slate-800 hover:bg-slate-100"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                type="number"
+                step="0.5"
+                {...register("weight_kg", { valueAsNumber: true })}
+                className="h-11 rounded-xl text-center font-bold text-sm border-slate-200 dark:border-slate-800"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => adjustValue("weight_kg", 0.5, 20, 300, 60)}
+                className="h-11 w-11 shrink-0 rounded-xl border-slate-200 dark:border-slate-800 hover:bg-slate-100"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {errors.weight_kg && (
+              <p className="text-[11px] text-rose-500">{errors.weight_kg.message}</p>
+            )}
+          </div>
         </div>
 
-        {/* Cân nặng */}
-        <div className="space-y-1.5">
-          <Label htmlFor="weight_kg" className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Cân nặng hiện tại (kg) <span className="text-rose-500">*</span>
-          </Label>
-          <div className="relative">
-            <Weight className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              id="weight_kg"
-              type="number"
-              step="0.5"
-              className="pl-9 pr-16 h-11 min-h-[44px] rounded-xl border-slate-200 dark:border-slate-800"
-              {...register("weight_kg", { valueAsNumber: true })}
-            />
-            <div className="flex items-center gap-0.5 absolute right-1.5 top-1/2 -translate-y-1/2 z-20">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => adjustValue("weight_kg", -1, 20, 300, 60)}
-                className="h-8 w-7 text-slate-500 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg"
-              >
-                <Minus className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => adjustValue("weight_kg", 1, 20, 300, 60)}
-                className="h-8 w-7 text-slate-500 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </Button>
+        {/* Bảng đồng hồ trực quan BMI */}
+        <div className={`p-4 rounded-xl border transition-all ${bmiCat.badgeBg}`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Chỉ số khối cơ thể (BMI):
+                </span>
+                <span className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
+                  {bmi} <span className="text-xs font-normal text-slate-500">kg/m²</span>
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {bmiCat.desc}
+              </p>
+            </div>
+            <Badge variant="outline" className={`font-bold text-xs py-1 px-3 rounded-lg border ${bmiCat.color}`}>
+              {bmiCat.label}
+            </Badge>
+          </div>
+
+          {/* Thanh phân dải màu sắc chuẩn IDI & WPRO châu Á */}
+          <div className="mt-3 space-y-1">
+            <div className="relative h-2.5 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex">
+              <div className="h-full bg-blue-400 w-1/4" title="Thiếu cân (< 18.5)" />
+              <div className="h-full bg-emerald-500 w-1/4" title="Lý tưởng (18.5 - 22.9)" />
+              <div className="h-full bg-amber-400 w-1/4" title="Thừa cân (23.0 - 24.9)" />
+              <div className="h-full bg-rose-500 w-1/4" title="Béo phì (≥ 25.0)" />
+            </div>
+            <div className="flex justify-between text-[10px] text-slate-400 pt-0.5 font-medium">
+              <span>&lt; 18.5</span>
+              <span>18.5 - 22.9</span>
+              <span>23.0 - 24.9</span>
+              <span>≥ 25.0</span>
             </div>
           </div>
-          {errors.weight_kg && (
-            <p className="text-xs text-rose-500 font-medium">{errors.weight_kg.message}</p>
-          )}
         </div>
       </div>
 
-      {/* Khối Thẻ Chỉ số BMI Tự động tính */}
-      <div className="p-4 rounded-2xl bg-teal-50/60 dark:bg-teal-950/30 border border-teal-100 dark:border-teal-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm">
-            <Activity className="h-5 w-5" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold text-teal-800 dark:text-teal-300 block">
-              Chỉ số khối cơ thể (BMI)
-            </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                {bmi}
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">kg/m²</span>
-            </div>
-          </div>
-        </div>
-        <div>
-          <Badge className={`px-3 py-1 rounded-xl text-xs font-bold border-0 ${bmiCat.color}`}>
-            {bmiCat.label}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Khối 3: Học vấn & Thu nhập */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+      {/* Khối 3: Trình độ học vấn & Thu nhập gia đình */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Trình độ học vấn */}
         <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-            <GraduationCap className="h-4 w-4 text-slate-400" />
-            Trình độ học vấn
+          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <GraduationCap className="h-4 w-4 text-teal-600" />
+            Trình độ học vấn cao nhất
           </Label>
           <Select
-            value={String(eduVal || 4)}
-            onValueChange={(val) => setValue("Education", Number(val))}
+            value={eduVal ? String(eduVal) : "4"}
+            onValueChange={(val) => setValue("Education", Number(val), { shouldValidate: true })}
           >
             <SelectTrigger className="h-11 min-h-[44px] rounded-xl border-slate-200 dark:border-slate-800">
-              <SelectValue placeholder="Chọn học vấn" />
+              <SelectValue placeholder="Chọn trình độ học vấn" />
             </SelectTrigger>
             <SelectContent>
               {EDUCATION_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={String(opt.value)}>
+                <SelectItem key={opt.value} value={String(opt.value)} className="text-xs">
                   {opt.label}
                 </SelectItem>
               ))}
@@ -240,21 +298,22 @@ export function Step1Demographics({ register, errors, setValue, watch }: Props) 
           </Select>
         </div>
 
+        {/* Mức thu nhập */}
         <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-            <DollarSign className="h-4 w-4 text-slate-400" />
-            Khung thu nhập hộ gia đình
+          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <DollarSign className="h-4 w-4 text-teal-600" />
+            Mức thu nhập gia đình
           </Label>
           <Select
-            value={String(incomeVal || 5)}
-            onValueChange={(val) => setValue("Income", Number(val))}
+            value={incomeVal ? String(incomeVal) : "5"}
+            onValueChange={(val) => setValue("Income", Number(val), { shouldValidate: true })}
           >
             <SelectTrigger className="h-11 min-h-[44px] rounded-xl border-slate-200 dark:border-slate-800">
               <SelectValue placeholder="Chọn mức thu nhập" />
             </SelectTrigger>
             <SelectContent>
               {INCOME_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={String(opt.value)}>
+                <SelectItem key={opt.value} value={String(opt.value)} className="text-xs">
                   {opt.label}
                 </SelectItem>
               ))}

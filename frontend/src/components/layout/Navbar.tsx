@@ -12,6 +12,8 @@ import {
   Menu,
   Home,
   ShieldAlert,
+  SlidersHorizontal,
+  Bot,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -39,6 +41,8 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: "Trang chủ", icon: Home },
     { href: "/screening", label: "Sàng lọc Nguy cơ", icon: ClipboardList },
+    { href: "/simulation", label: "Mô phỏng What-If", icon: SlidersHorizontal },
+    { href: "/chat", label: "Trợ lý AI", icon: Bot },
     ...(isAuthenticated
       ? [{ href: "/dashboard", label: "Bảng điều khiển", icon: LayoutDashboard }]
       : []),

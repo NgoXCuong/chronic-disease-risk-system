@@ -83,8 +83,11 @@ export type ComprehensiveScreeningResponse = Record<string, DiseasePrediction>;
 
 export interface ScreeningHistoryDiseaseSummary {
   disease: string;
+  disease_name_vi?: string;
   risk_level: RiskLevel;
-  score: number;
+  risk_score?: number;
+  risk_percentage?: number;
+  score?: number;
 }
 
 export interface ScreeningHistoryItem {

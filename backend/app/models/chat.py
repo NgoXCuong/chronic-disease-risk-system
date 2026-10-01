@@ -88,7 +88,12 @@ class AIChatMessage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         doc="Parent conversation session ID"
     )
     sender_role: Mapped[MessageSenderRole] = mapped_column(
-        Enum(MessageSenderRole, name="message_sender_role_enum", create_type=False),
+        Enum(
+            MessageSenderRole,
+            name="message_sender_role_enum",
+            create_type=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
         nullable=False,
         doc="Role: 'user', 'assistant', or 'system'"
     )
