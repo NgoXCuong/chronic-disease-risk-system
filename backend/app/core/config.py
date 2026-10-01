@@ -68,6 +68,7 @@ class Settings(BaseSettings):
 
     # Khóa API tích hợp LLM bên ngoài (Google Gemini API)
     GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-3.5-flash"
 
     # Đường dẫn thư mục chứa Artifacts của 5 mô hình Machine Learning
     MODEL_DIR: str = os.path.abspath(

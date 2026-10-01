@@ -415,36 +415,52 @@ class ChatService:
         patient_context: str,
         recent_history: List[AIChatMessage]
     ) -> str:
-        """Sinh câu trả lời thông minh qua Gemini 1.5 Flash hoặc fallback RAG y tế."""
+        """Sinh câu trả lời thông minh qua Gemini (gemini-3.8-flash) hoặc fallback RAG y tế."""
         # Thử gọi Google Gemini API nếu key khả dụng
         if _GEMINI_CLIENT_READY and settings.GEMINI_API_KEY:
-            try:
-                import google.generativeai as genai
-                model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
-                    system_instruction=(
-                        "Bạn là Trợ lý Y tế AI thuộc Hệ thống Sàng lọc Nguy cơ Bệnh Mạn tính (Chronic Disease Risk System). "
-                        "Nhiệm vụ: Giải thích kết quả sàng lọc, phân tích các chỉ số xét nghiệm từ giấy khám bệnh (nếu có), "
-                        "và tư vấn lối sống (dinh dưỡng, vận động) dựa trên tài liệu chuẩn của Bộ Y tế Việt Nam và WHO.\n\n"
-                        "QUY TẮC BẮT BUỘC:\n"
-                        "1. Tư cách CDSS: Luôn nhấn mạnh kết quả chỉ mang tính sàng lọc/tham khảo, KHÔNG thay thế chẩn đoán y khoa.\n"
-                        "2. Tuyệt đối KHÔNG kê đơn thuốc cụ thể (tên thuốc, liều dùng).\n"
-                        "3. Dựa sát vào các đoạn tài liệu được cung cấp trong Tri thức Y khoa đính kèm.\n"
-                        "4. Trả lời bằng tiếng Việt ân cần, giải thích dễ hiểu, cấu trúc rõ ràng với gạch đầu dòng.\n"
-                        "5. Nếu phát hiện người dùng có triệu chứng khẩn cấp, nhắc nhở đi khám ngay."
-                    )
-                )
+            import google.generativeai as genai
+            system_instruction = (
+                "Bạn là Trợ lý Y tế AI thuộc Hệ thống Sàng lọc Nguy cơ Bệnh Mạn tính (Chronic Disease Risk System). "
+                "Nhiệm vụ: Giải thích kết quả sàng lọc, phân tích các chỉ số xét nghiệm từ giấy khám bệnh (nếu có), "
+                "và tư vấn lối sống (dinh dưỡng, vận động) dựa trên tài liệu chuẩn của Bộ Y tế Việt Nam và WHO.\n\n"
+                "QUY TẮC BẮT BUỘC:\n"
+                "1. Tư cách CDSS: Luôn nhấn mạnh kết quả chỉ mang tính sàng lọc/tham khảo, KHÔNG thay thế chẩn đoán y khoa.\n"
+                "2. Tuyệt đối KHÔNG kê đơn thuốc cụ thể (tên thuốc, liều dùng).\n"
+                "3. Dựa sát vào các đoạn tài liệu được cung cấp trong Tri thức Y khoa đính kèm.\n"
+                "4. Trả lời bằng tiếng Việt ân cần, giải thích dễ hiểu, cấu trúc rõ ràng với gạch đầu dòng.\n"
+                "5. Nếu phát hiện người dùng có triệu chứng khẩn cấp, nhắc nhở đi khám ngay."
+            )
+            prompt_parts = [
+                f"HỒ SƠ BỆNH NHÂN:\n{patient_context}\n",
+                f"TRI THỨC Y KHOA THAM CHIẾU (RAG):\n{context_kb or 'Không có tài liệu trực tiếp, hãy dựa trên kiến thức y khoa chuẩn chung.'}\n",
+                f"CÂU HỎI CỦA NGƯỜI BỆNH: {user_question}"
+            ]
 
-                prompt_parts = [
-                    f"HỒ SƠ BỆNH NHÂN:\n{patient_context}\n",
-                    f"TRI THỨC Y KHOA THAM CHIẾU (RAG):\n{context_kb or 'Không có tài liệu trực tiếp, hãy dựa trên kiến thức y khoa chuẩn chung.'}\n",
-                    f"CÂU HỎI CỦA NGƯỜI BỆNH: {user_question}"
-                ]
-                response = await model.generate_content_async(prompt_parts)
-                if response and response.text:
-                    return response.text.strip()
-            except Exception as e:
-                logger.error(f"Lỗi khi gọi Google Gemini API, chuyển sang Clinical Fallback: {e}")
+            # Danh sách mô hình ưu tiên thử nghiệm (tránh lỗi 404 deprecated model)
+            candidate_models = [
+                settings.GEMINI_MODEL,
+                "gemini-3.5-flash",
+                "gemini-3.5-flash-lite",
+                "gemini-flash-latest",
+            ]
+            models_to_try = []
+            for m in candidate_models:
+                if m and m not in models_to_try:
+                    models_to_try.append(m)
+
+            for model_name in models_to_try:
+                try:
+                    model = genai.GenerativeModel(
+                        model_name=model_name,
+                        system_instruction=system_instruction
+                    )
+                    response = await model.generate_content_async(prompt_parts)
+                    if response and response.text:
+                        return response.text.strip()
+                except Exception as e:
+                    logger.warning(f"Lỗi khi thử mô hình Gemini '{model_name}': {e}")
+
+            logger.error("Tất cả mô hình Gemini đều không phản hồi, chuyển sang Clinical Fallback.")
 
         # Fallback Y tế Lâm Sàng (Rule-based RAG Response Generator)
         return cls._generate_clinical_fallback_response(user_question, context_kb, patient_context)
