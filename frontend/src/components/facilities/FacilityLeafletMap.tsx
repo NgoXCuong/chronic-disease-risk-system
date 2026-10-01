@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { NearbyFacilityItem } from "@/types/facility";
 
 interface FacilityLeafletMapProps {
@@ -14,14 +15,15 @@ interface FacilityLeafletMapProps {
 }
 
 const PIN_COLORS: Record<string, string> = {
-  ENDOCRINOLOGY: "#0d9488", // Teal
-  CARDIOLOGY: "#e11d48",    // Rose
+  ENDOCRINOLOGY: "#0d9488",    // Teal
+  CARDIOLOGY: "#e11d48",       // Rose
   STROKE_NEUROLOGY: "#7c3aed", // Purple
   GENERAL_HOSPITAL: "#0284c7", // Sky
 };
 
 /**
  * Bản đồ tương tác Leaflet.js hiển thị vị trí người dùng và bệnh viện chuyên khoa (FR-24).
+ * Sử dụng dịch vụ gạch bản đồ CartoDB Voyager dựa trên OpenStreetMap với độ ổn định cao.
  */
 export default function FacilityLeafletMap({
   userLocation,
@@ -35,19 +37,25 @@ export default function FacilityLeafletMap({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
 
-  // Khởi tạo bản đồ OpenStreetMap duy nhất một lần
+  // 1. Khởi tạo bản đồ CartoDB Voyager / OpenStreetMap
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    const map = L.map(mapContainerRef.current).setView(
-      [userLocation.latitude, userLocation.longitude],
-      13
-    );
+    const map = L.map(mapContainerRef.current, {
+      zoomControl: true,
+      attributionControl: true,
+    }).setView([userLocation.latitude, userLocation.longitude], 13);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-      maxZoom: 19,
-    }).addTo(map);
+    // Sử dụng CartoDB Voyager tile server: tải nhanh, không bị chặn kết nối và hiển thị rõ địa danh Việt Nam
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+      {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: "abcd",
+        maxZoom: 19,
+      }
+    ).addTo(map);
 
     map.on("click", (e: L.LeafletMouseEvent) => {
       onMapClick?.({ latitude: e.latlng.lat, longitude: e.latlng.lng });
@@ -56,13 +64,27 @@ export default function FacilityLeafletMap({
     mapInstanceRef.current = map;
     markersLayerRef.current = L.layerGroup().addTo(map);
 
+    // Kích hoạt invalidateSize để tránh lỗi bản đồ màu xám do container co giãn
+    const initTimer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
     return () => {
+      clearTimeout(initTimer);
+      resizeObserver.disconnect();
       map.remove();
       mapInstanceRef.current = null;
     };
   }, []);
 
-  // Cập nhật Marker và Vùng quét Bán kính khi dữ liệu thay đổi
+  // 2. Cập nhật Marker và Vùng quét Bán kính khi dữ liệu thay đổi
   useEffect(() => {
     const map = mapInstanceRef.current;
     const layer = markersLayerRef.current;
@@ -70,7 +92,7 @@ export default function FacilityLeafletMap({
 
     layer.clearLayers();
 
-    // 1. Marker Vị trí người dùng (Pulsing Circle)
+    // Marker Vị trí người dùng (Pulsing Pin)
     const userPin = L.divIcon({
       className: "custom-user-pin",
       html: `<div class="relative flex items-center justify-center w-7 h-7">
@@ -80,8 +102,11 @@ export default function FacilityLeafletMap({
       iconSize: [28, 28],
       iconAnchor: [14, 14],
     });
+
     L.marker([userLocation.latitude, userLocation.longitude], { icon: userPin })
-      .bindPopup("<div class='font-bold text-xs text-teal-800 p-1'>📍 Vị trí của bạn</div>")
+      .bindPopup(
+        "<div style='font-size: 12px; font-weight: bold; color: #0f766e; padding: 2px;'>📍 Vị trí hiện tại của bạn</div>"
+      )
       .addTo(layer);
 
     // Vòng tròn thể hiện bán kính quét
@@ -93,39 +118,47 @@ export default function FacilityLeafletMap({
       radius: radiusKm * 1000,
     }).addTo(layer);
 
-    // 2. Marker các cơ sở y tế
+    // Marker các cơ sở y tế
     facilities.forEach((fac) => {
       const color = PIN_COLORS[fac.specialty] || "#0d9488";
       const isSel = selectedFacility?.id === fac.id;
       const facPin = L.divIcon({
         className: "custom-hospital-pin",
-        html: `<div class="flex items-center justify-center w-8 h-8 rounded-full shadow-md text-white font-bold text-xs transition-transform ${isSel ? 'scale-125 ring-2 ring-white ring-offset-2' : 'hover:scale-110'}" style="background-color: ${color};">
+        html: `<div class="flex items-center justify-center w-8 h-8 rounded-full shadow-lg text-white font-bold text-xs transition-transform ${
+          isSel ? "scale-125 ring-3 ring-white ring-offset-2 ring-offset-teal-600" : "hover:scale-110"
+        }" style="background-color: ${color};">
                 🏥
                </div>`,
         iconSize: [32, 32],
         iconAnchor: [16, 16],
       });
 
+      const popupHtml = `
+        <div style="max-width: 220px; font-family: sans-serif; padding: 2px;">
+          <div style="font-weight: 700; font-size: 13px; color: #0f172a; margin-bottom: 3px; line-height: 1.3;">${fac.name}</div>
+          <div style="font-size: 11px; color: #64748b; margin-bottom: 6px; line-height: 1.3;">${fac.address}</div>
+          <span style="display: inline-block; font-size: 11px; font-weight: 700; color: #0d9488; background: #f0fdfa; padding: 2px 8px; border-radius: 6px; border: 1px solid #ccfbf1;">
+            📍 Cách bạn: ${fac.distance_km} km
+          </span>
+        </div>
+      `;
+
       const marker = L.marker([fac.latitude, fac.longitude], { icon: facPin })
-        .bindPopup(
-          `<div class="p-1 space-y-1 font-sans">
-             <b class="text-xs font-semibold text-slate-900">${fac.name}</b>
-             <p class="text-[11px] text-slate-500">${fac.address}</p>
-             <span class="inline-block text-[11px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded">Cách bạn: ${fac.distance_km} km</span>
-           </div>`
-        )
+        .bindPopup(popupHtml, { maxWidth: 260 })
         .addTo(layer);
 
       marker.on("click", () => onSelectFacility(fac));
       if (isSel) marker.openPopup();
     });
 
-    // Tự động điều chỉnh khung nhìn nếu chọn cơ sở y tế cụ thể
+    // Tự động điều chỉnh khung nhìn
     if (selectedFacility) {
-      map.panTo([selectedFacility.latitude, selectedFacility.longitude], { animate: true });
+      map.flyTo([selectedFacility.latitude, selectedFacility.longitude], 14, { duration: 0.8 });
     } else {
       map.setView([userLocation.latitude, userLocation.longitude], 13);
     }
+
+    map.invalidateSize();
   }, [userLocation, radiusKm, facilities, selectedFacility]);
 
   return <div ref={mapContainerRef} className="w-full h-full min-h-[400px] rounded-2xl z-0" />;

@@ -41,8 +41,8 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/", label: "Trang chủ", icon: Home },
-    { href: "/screening", label: "Sàng lọc Nguy cơ", icon: ClipboardList },
-    { href: "/simulation", label: "Mô phỏng What-If", icon: SlidersHorizontal },
+    { href: "/screening", label: "Sàng lọc", icon: ClipboardList },
+    { href: "/simulation", label: "Mô phỏng", icon: SlidersHorizontal },
     { href: "/facilities", label: "Cơ sở Y tế", icon: MapPin },
     { href: "/chat", label: "Trợ lý AI", icon: Bot },
     ...(isAuthenticated
@@ -57,45 +57,45 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 transition-colors shadow-xs">
-      <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-3 sm:px-6 lg:px-8">
         {/* Logo Thương hiệu Y tế CDSS */}
-        <Link href="/" className="flex items-center gap-3 group focus:outline-none">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-600 text-white shadow-md shadow-teal-600/20 group-hover:bg-teal-700 transition-colors">
+        <Link href="/" className="flex items-center gap-2.5 group focus:outline-none shrink-0">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-teal-600 text-white shadow-md shadow-teal-600/20 group-hover:bg-teal-700 transition-colors shrink-0">
             <HeartPulse className="h-5 w-5 animate-pulse" />
           </div>
-          <div className="text-left">
-            <span className="block text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+          <div className="text-left whitespace-nowrap">
+            <span className="block text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
               ChronicCare <span className="text-teal-600 dark:text-teal-400 font-extrabold">CDSS</span>
             </span>
-            <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide uppercase">
+            <span className="hidden xl:block text-[10px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide uppercase">
               Hệ thống Sàng lọc Y tế
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+        <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 shrink-0">
           {navLinks.map((link) => {
             const active = isActive(link.href);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                className={`inline-flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 xl:py-2 rounded-xl text-xs xl:text-sm font-semibold transition-all whitespace-nowrap ${
                   active
                     ? "bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 shadow-xs"
                     : "text-slate-600 hover:text-teal-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-teal-400 dark:hover:bg-slate-900"
                 }`}
               >
-                <link.icon className="h-4 w-4" />
-                {link.label}
+                <link.icon className="h-4 w-4 shrink-0" />
+                <span>{link.label}</span>
               </Link>
             );
           })}
         </nav>
 
         {/* Desktop Auth Controls & Dropdown */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
           {!isLoading && (
             <>
               {isAuthenticated && user ? (
@@ -175,7 +175,7 @@ export function Navbar() {
         </div>
 
         {/* Mobile Navigation Drawer (Shadcn Sheet Primitive) */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-2">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button

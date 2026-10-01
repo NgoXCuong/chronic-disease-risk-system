@@ -60,9 +60,9 @@ export function FacilityFilterBar({
           </div>
 
           {/* Lọc theo chuyên khoa y tế */}
-          <div className="w-[200px]">
+          <div className="w-[230px]">
             <Select value={selectedSpecialty} onValueChange={onSpecialtyChange}>
-              <SelectTrigger className="h-11 rounded-xl border-slate-200 dark:border-slate-800">
+              <SelectTrigger className="h-11 rounded-xl border-slate-200 dark:border-slate-800 whitespace-nowrap text-xs sm:text-sm">
                 <Filter className="w-4 h-4 text-teal-600 mr-1.5 shrink-0" />
                 <SelectValue placeholder="Chuyên khoa" />
               </SelectTrigger>
