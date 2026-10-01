@@ -9,9 +9,11 @@ import {
   LayoutDashboard,
   ShieldAlert,
   ArrowRight,
+  MapPin,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { ChatFloatingButton } from "@/components/chat/ChatFloatingButton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DiseasePrediction } from "@/types/screening";
@@ -106,7 +108,12 @@ export default function ScreeningResultPage() {
             </div>
 
             {/* Nút hành động */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link href="/facilities">
+                <Button variant="outline" className="h-10 rounded-xl text-xs font-semibold gap-1.5 border-teal-200 text-teal-700 bg-teal-50/50 hover:bg-teal-100 dark:border-teal-800 dark:text-teal-300 dark:bg-teal-950/30">
+                  <MapPin className="h-3.5 w-3.5 text-teal-600" /> Bệnh viện gần nhất
+                </Button>
+              </Link>
               <Link href="/screening">
                 <Button variant="outline" className="h-10 rounded-xl text-xs font-semibold gap-1.5 border-slate-200 dark:border-slate-800">
                   <RotateCcw className="h-3.5 w-3.5" /> Khảo sát lại
@@ -192,6 +199,7 @@ export default function ScreeningResultPage() {
       </main>
 
       <Footer />
+      <ChatFloatingButton />
     </div>
   );
 }
