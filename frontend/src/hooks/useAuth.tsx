@@ -1,136 +1,109 @@
 "use client";
 
-import * as React from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { authApi } from "@/lib/api/auth";
-import {
-  TokenResponse,
-  User,
-  UserLoginRequest,
-  UserRegisterRequest,
-} from "@/types/auth";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { AuthContextType, User, UserLoginRequest, UserRegisterRequest } from "@/types/auth";
 
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  login: (credentials: UserLoginRequest) => Promise<void>;
-  register: (data: UserRegisterRequest) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
-}
-
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<User | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
 
-  // Nạp thông tin người dùng từ phiên làm việc HttpOnly Cookie
-  const fetchCurrentUser = React.useCallback(async () => {
-    // Nếu trình duyệt chưa từng đăng nhập (không có cookie cờ đăng nhập), bỏ qua gọi API tránh lỗi 401
-    if (typeof document !== "undefined" && !document.cookie.includes("medrisk_logged_in=true")) {
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-
+  // Khôi phục phiên làm việc từ HttpOnly Cookie khi tải trang
+  const refreshUser = useCallback(async (): Promise<User | null> => {
     try {
-      setIsLoading(true);
-      const data = await authApi.getMe();
-      setUser(data);
-      setError(null);
-    } catch (err: any) {
+      const userData = await authApi.getMe();
+      setUser(userData);
+      return userData;
+    } catch {
       setUser(null);
+      return null;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  React.useEffect(() => {
-    fetchCurrentUser();
-  }, [fetchCurrentUser]);
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
 
-  // Đăng nhập: Máy chủ tự động gắn HttpOnly cookies an toàn chống XSS
+  // Xử lý Đăng nhập
   const login = async (credentials: UserLoginRequest): Promise<void> => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
       await authApi.login(credentials);
-
-      // Lấy thông tin user ngay sau khi cookie được trình duyệt thiết lập
-      const data = await authApi.getMe();
-      setUser(data);
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.detail ||
-        "Đăng nhập thất bại. Vui lòng kiểm tra lại email hoặc mật khẩu.";
-      setError(msg);
-      throw new Error(msg);
+      const userData = await authApi.getMe();
+      setUser(userData);
+      toast.success("Đăng nhập thành công!", {
+        description: `Chào mừng trở lại, ${userData.profile?.full_name || userData.email}.`,
+      });
+      router.push("/dashboard");
+    } catch (error) {
+      const errorMsg = getApiErrorMessage(error);
+      toast.error("Đăng nhập thất bại", { description: errorMsg });
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Đăng ký tài khoản mới và tự động đăng nhập
-  const register = async (data: UserRegisterRequest): Promise<void> => {
+  // Xử lý Đăng ký tài khoản mới
+  const register = async (payload: UserRegisterRequest): Promise<void> => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-      await authApi.register(data);
-
-      // Tự động đăng nhập ngay sau khi đăng ký thành công
-      await login({ email: data.email, password: data.password });
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.detail ||
-        "Đăng ký không thành công. Email có thể đã được sử dụng.";
-      setError(msg);
-      throw new Error(msg);
+      await authApi.register(payload);
+      toast.success("Đăng ký tài khoản thành công!", {
+        description: "Hồ sơ y tế của bạn đã được khởi tạo. Vui lòng đăng nhập.",
+      });
+      router.push("/login");
+    } catch (error) {
+      const errorMsg = getApiErrorMessage(error);
+      toast.error("Đăng ký thất bại", { description: errorMsg });
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Đăng xuất: Yêu cầu server thu hồi refresh token và xóa sạch HttpOnly cookies
+  // Xử lý Đăng xuất
   const logout = async (): Promise<void> => {
+    setIsLoading(true);
     try {
       await authApi.logout();
-    } catch (err) {
-      console.warn("Lỗi khi gọi API đăng xuất:", err);
+    } catch {
+      // Dù API lỗi vẫn xóa state client để đảm bảo an toàn
     } finally {
       setUser(null);
+      setIsLoading(false);
+      toast.info("Đã đăng xuất", {
+        description: "Phiên làm việc đã kết thúc an toàn.",
+      });
       router.push("/login");
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        error,
-        login,
-        register,
-        logout,
-        refreshProfile: fetchCurrentUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value: AuthContextType = {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    login,
+    register,
+    logout,
+    refreshUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextType {
-  const context = React.useContext(AuthContext);
+  const context = useContext(AuthContext);
   if (!context) {
-    throw new Error(
-      "useAuth bắt buộc phải được sử dụng bên trong <AuthProvider>"
-    );
+    throw new Error("useAuth phải được sử dụng bên trong AuthProvider");
   }
   return context;
 }

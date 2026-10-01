@@ -37,6 +37,8 @@ export interface DiseasePrediction {
   risk_score: number;
   risk_percentage: number;
   risk_level: RiskLevel;
+  optimal_threshold: number;
+  is_above_threshold?: boolean;
   top_risk_factors: RiskFactor[];
   recommendations: string[];
   disclaimer: string;
@@ -77,9 +79,5 @@ export interface ClinicalDiabetesPayload {
   Age: number;
 }
 
-export interface ComprehensiveScreeningResponse {
-  record_id: string;
-  evaluated_at: string;
-  predictions: Record<string, DiseasePrediction>;
-  high_risk_diseases: string[];
-}
+export type ComprehensiveScreeningResponse = Record<string, DiseasePrediction>;
+

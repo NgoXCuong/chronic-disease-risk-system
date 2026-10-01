@@ -1,87 +1,77 @@
-import * as React from "react";
-import Link from "next/link";
-import { Activity, BrainCircuit, ShieldCheck, Stethoscope } from "lucide-react";
+import React from "react";
+import { ShieldCheck, HeartPulse, Stethoscope, ClipboardCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function AuthBrandingPanel() {
+interface AuthBrandingPanelProps {
+  className?: string;
+}
+
+export function AuthBrandingPanel({ className }: AuthBrandingPanelProps) {
   const highlights = [
     {
-      icon: Activity,
-      title: "5 Mô hình Sàng lọc Nguy cơ",
-      desc: "Đánh giá nguy cơ Đái tháo đường, Tăng huyết áp, Tim mạch và Đột quỵ dựa trên các tiêu chí dịch tễ học lâm sàng.",
+      icon: Stethoscope,
+      title: "Sàng lọc Sớm & Đa diện Nguy cơ Bệnh",
+      desc: "Chủ động tầm soát sớm nguy cơ Đái tháo đường, Tăng huyết áp, Tim mạch và Đột quỵ thông qua lối sống và chỉ số sinh học.",
     },
     {
-      icon: BrainCircuit,
-      title: "Giải thích Rõ ràng Yếu tố Sức khỏe",
-      desc: "Chỉ rõ từng chỉ số thể trạng và thói quen sinh hoạt đang làm tăng hoặc giảm nguy cơ bệnh của bạn.",
+      icon: ClipboardCheck,
+      title: "Phân tích Yếu tố Ảnh hưởng Cá nhân hóa",
+      desc: "Chỉ rõ các chỉ số cơ thể và thói quen sinh hoạt đang tác động tích cực hay tiềm ẩn rủi ro đối với sức khỏe của bạn.",
     },
     {
       icon: ShieldCheck,
-      title: "Bảo vệ Thông tin Sức khỏe Cá nhân",
-      desc: "Hồ sơ y tế và kết quả sàng lọc được mã hóa và bảo mật nghiêm ngặt, bảo vệ quyền riêng tư tuyệt đối cho người bệnh.",
+      title: "Bảo mật & Quyền Riêng tư Y tế Tuyệt đối",
+      desc: "Toàn bộ thông tin thể chất và hồ sơ theo dõi sức khỏe của bạn được bảo vệ nghiêm ngặt theo tiêu chuẩn an toàn dữ liệu y tế.",
     },
   ];
 
   return (
-    <div className="hidden lg:flex flex-col justify-between w-full h-full bg-gradient-to-br from-medical-900 via-slate-900 to-medical-950 text-white p-12 lg:p-16 relative overflow-hidden select-none">
-      {/* Background Decorative Medical Wave */}
-      <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-medical-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -left-20 -top-20 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div
+      className={cn(
+        "relative hidden w-full lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-teal-700 via-teal-800 to-slate-900 p-8 xl:p-12 text-white overflow-hidden",
+        className
+      )}
+    >
+      {/* Nền hiệu ứng y tế */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.15),transparent_50%)]" />
 
-      {/* Top Header Logo */}
+      {/* Header thương hiệu */}
       <div className="relative z-10">
-        <Link href="/" className="inline-flex items-center gap-3 group">
-          <div className="w-11 h-11 rounded-xl bg-medical-600 flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform">
-            <Stethoscope className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="font-extrabold text-2xl tracking-tight text-white flex items-center gap-1">
-              MedRisk <span className="text-medical-400 font-black">AI</span>
-            </span>
-            <span className="block text-[11px] font-medium text-slate-400">
-              Sàng lọc Nguy cơ Bệnh Mạn tính
-            </span>
-          </div>
-        </Link>
-      </div>
-
-      {/* Main Clinical Mission Content */}
-      <div className="relative z-10 my-8 space-y-6 max-w-lg">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-medical-800/60 border border-medical-700/60 text-medical-300 text-xs font-bold uppercase tracking-wider">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          Hệ thống Hỗ trợ Ra Quyết định Y tế (CDSS)
+        <div className="inline-flex items-center gap-2.5 rounded-full bg-teal-500/20 px-4 py-1.5 backdrop-blur-md border border-teal-400/30">
+          <HeartPulse className="w-5 h-5 text-teal-300 animate-pulse" />
+          <span className="text-xs font-semibold tracking-wider uppercase text-teal-200">
+            Hệ thống Hỗ trợ Sàng lọc Y tế (CDSS)
+          </span>
         </div>
-
-        <h1 className="text-3xl xl:text-4xl font-black leading-tight text-white tracking-tight">
-          Chủ động Nhận diện &amp; Kiểm soát Sớm{" "}
-          <span className="text-medical-400">Nguy cơ Sức khỏe</span>
+        <h1 className="mt-6 text-3xl font-extrabold tracking-tight sm:text-4xl text-white">
+          Sàng lọc & Theo dõi <br />
+          <span className="text-teal-300">Nguy cơ Bệnh Mạn tính</span>
         </h1>
-
-        <p className="text-sm text-slate-300 leading-relaxed">
-          Ứng dụng các mô hình học máy tiên tiến đã hiệu chuẩn xác suất y học để cung cấp bức tranh toàn diện và khách quan về thể trạng của bạn.
+        <p className="mt-4 text-sm text-teal-100/90 leading-relaxed max-w-md">
+          Đồng hành cùng bạn trong chủ động dự phòng, phát hiện sớm nguy cơ và xây dựng lộ trình nâng cao sức khỏe bền vững.
         </p>
-
-        {/* 3 Medical Highlights */}
-        <div className="space-y-4 pt-2">
-          {highlights.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <div key={idx} className="flex items-start gap-3.5">
-                <div className="w-9 h-9 rounded-lg bg-medical-800/50 border border-medical-700/50 flex items-center justify-center text-medical-300 shrink-0 mt-0.5">
-                  <Icon className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-white">{item.title}</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed mt-0.5">{item.desc}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
-      {/* Legal Medical Disclaimer Footnote */}
-      <div className="relative z-10 pt-4 border-t border-slate-800 text-[11px] text-slate-400 leading-relaxed">
-        <strong>Lưu ý y tế:</strong> Hệ thống đóng vai trò hỗ trợ sàng lọc nhận thức ban đầu, tuyệt đối không thay thế kết luận lâm sàng và phác đồ điều trị của bác sĩ chuyên khoa.
+      {/* Danh sách giá trị lâm sàng cốt lõi */}
+      <div className="relative z-10 space-y-6 my-8">
+        {highlights.map((item, idx) => (
+          <div key={idx} className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-600/40 border border-teal-400/30 text-teal-200 shadow-sm">
+              <item.icon className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-white">{item.title}</h2>
+              <p className="text-xs text-teal-200/80 leading-relaxed mt-0.5">{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tuyên bố miễn trừ y tế */}
+      <div className="relative z-10 border-t border-teal-500/30 pt-6">
+        <p className="text-xs text-teal-200/70 leading-relaxed">
+          * Khuyến cáo y tế: Kết quả đánh giá chỉ mang tính chất tham vấn sàng lọc và hỗ trợ nhận thức sức khỏe, tuyệt đối không thay thế kết luận lâm sàng hay phác đồ điều trị của bác sĩ.
+        </p>
       </div>
     </div>
   );

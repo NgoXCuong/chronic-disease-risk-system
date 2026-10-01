@@ -1,22 +1,25 @@
 /**
- * Định nghĩa Type/Interface cho Hệ thống Xác thực & Người dùng (Authentication & User).
- * Tuân thủ chuẩn mực Pydantic schemas của Backend FastAPI.
+ * Kiểu dữ liệu xác thực người dùng (Auth Types)
+ * Đồng bộ 100% với Pydantic schemas của FastAPI Backend
  */
 
-export type UserRole = "USER" | "DOCTOR" | "ADMIN";
-export type BiologicalSex = "male" | "female" | "other";
+export type BiologicalSex = "MALE" | "FEMALE" | "OTHER";
+
+export type UserRole = "USER" | "HEALTH_CONSULTANT" | "ADMIN";
 
 export interface PatientProfile {
-  id?: string;
-  user_id?: string;
+  id: string;
+  user_id: string;
   full_name?: string | null;
   date_of_birth?: string | null;
-  gender?: BiologicalSex | string | null;
+  gender?: BiologicalSex | null;
   height_cm?: number | null;
   weight_kg?: number | null;
   bmi?: number | null;
-  created_at?: string;
-  updated_at?: string;
+  medical_history?: Record<string, unknown> | null;
+  emergency_contact?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface User {
@@ -29,19 +32,19 @@ export interface User {
   profile?: PatientProfile | null;
 }
 
-export interface UserLoginRequest {
-  email: string;
-  password: string;
-}
-
 export interface UserRegisterRequest {
   email: string;
   password: string;
   full_name?: string;
   date_of_birth?: string;
-  gender?: BiologicalSex | string;
+  gender?: BiologicalSex;
   height_cm?: number;
   weight_kg?: number;
+}
+
+export interface UserLoginRequest {
+  email: string;
+  password: string;
 }
 
 export interface TokenResponse {
@@ -51,11 +54,22 @@ export interface TokenResponse {
   expires_in: number;
 }
 
-export interface RefreshTokenRequest {
-  refresh_token: string;
+export interface PasswordChangeRequest {
+  current_password: string;
+  new_password: string;
 }
 
 export interface MessageResponse {
   message: string;
-  success?: boolean;
+  success: boolean;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (credentials: UserLoginRequest) => Promise<void>;
+  register: (payload: UserRegisterRequest) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
 }

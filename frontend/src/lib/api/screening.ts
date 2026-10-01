@@ -23,12 +23,12 @@ export const screeningApi = {
 
     modelsPromise = client
       .get<LoadedModel[]>("/screening/models")
-      .then((res) => {
+      .then((res: { data: LoadedModel[] }) => {
         cachedModels = res.data;
         modelsPromise = null;
         return res.data;
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         modelsPromise = null;
         throw err;
       });

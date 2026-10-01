@@ -1,149 +1,197 @@
-"use client";
-
-import * as React from "react";
-import { Control, Controller, FieldErrors, UseFormRegister } from "react-hook-form";
-import { Heart, Ruler, User, Weight } from "lucide-react";
-import { MedicalInputField } from "@/components/common/MedicalInputField";
-import { MedicalDatePicker } from "@/components/common/MedicalDatePicker";
-import { NumberStepperInput } from "@/components/common/NumberStepperInput";
-import { BMICalculatorCard } from "@/components/common/BMICalculatorCard";
+import React from "react";
+import { UseFormRegister, FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { User, Ruler, Weight, Info, Plus, Minus } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RegisterFormData } from "@/lib/validations/auth";
+import { BiologicalSex } from "@/types/auth";
 
-interface RegisterVitalsSectionProps {
-  register: UseFormRegister<any>;
-  control: any;
-  errors: FieldErrors<any>;
-  heightValue?: number | string;
-  weightValue?: number | string;
+interface Props {
+  register: UseFormRegister<RegisterFormData>;
+  errors: FieldErrors<RegisterFormData>;
+  setValue: UseFormSetValue<RegisterFormData>;
+  watch?: UseFormWatch<RegisterFormData>;
 }
 
-export function RegisterVitalsSection({
-  register,
-  control,
-  errors,
-  heightValue,
-  weightValue,
-}: RegisterVitalsSectionProps) {
-  const heightNum = heightValue ? Number(heightValue) : null;
-  const weightNum = weightValue ? Number(weightValue) : null;
+export function RegisterVitalsSection({ register, errors, setValue, watch }: Props) {
+  const heightVal = watch ? watch("height_cm") : undefined;
+  const weightVal = watch ? watch("weight_kg") : undefined;
+
+  const adjustValue = (
+    field: "height_cm" | "weight_kg",
+    delta: number,
+    min: number,
+    max: number,
+    defaultVal: number
+  ) => {
+    const raw = field === "height_cm" ? heightVal : weightVal;
+    const current = typeof raw === "number" && !isNaN(raw) ? raw : null;
+
+    let next: number;
+    if (current === null || current < min) {
+      // Nếu chưa nhập hoặc đang ở mức 0/nhỏ hơn ngưỡng sinh học tối thiểu
+      next = delta > 0 ? defaultVal : min;
+    } else {
+      next = Math.round((current + delta) * 10) / 10;
+      next = Math.max(min, Math.min(max, next));
+    }
+
+    setValue(field, next, { shouldValidate: true, shouldDirty: true });
+  };
 
   return (
-    <div className="space-y-3.5 pt-2 border-t border-slate-200/80 dark:border-slate-800">
-      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-        <Heart className="w-3.5 h-3.5 text-medical-600" />
-        2. Thông tin bệnh nhân &amp; Thể trạng ban đầu
-      </h3>
+    <div className="space-y-4">
+      {/* Họ và tên */}
+      <div className="space-y-1.5">
+        <Label htmlFor="reg-fullname" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Họ và tên bệnh nhân
+        </Label>
+        <div className="relative">
+          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            id="reg-fullname"
+            type="text"
+            placeholder="Nguyễn Văn A"
+            className="pl-10 h-11 min-h-[44px] rounded-xl border-slate-200 dark:border-slate-800"
+            {...register("full_name")}
+          />
+        </div>
+        {errors.full_name && (
+          <p className="text-xs text-rose-500 font-medium">{errors.full_name.message}</p>
+        )}
+      </div>
 
-      {/* Họ và tên bệnh nhân */}
-      <MedicalInputField
-        id="full_name"
-        label="Họ và tên bệnh nhân"
-        icon={User}
-        placeholder="Ví dụ: Nguyễn Văn A"
-        error={errors.full_name?.message as string}
-        {...register("full_name")}
-      />
+      {/* Giới tính sinh học */}
+      <div className="space-y-1.5">
+        <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Giới tính sinh học
+        </Label>
+        <Select onValueChange={(val) => setValue("gender", val as BiologicalSex)}>
+          <SelectTrigger className="h-11 min-h-[44px] rounded-xl border-slate-200 dark:border-slate-800">
+            <SelectValue placeholder="Chọn giới tính sinh học" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="MALE">Nam (Male)</SelectItem>
+            <SelectItem value="FEMALE">Nữ (Female)</SelectItem>
+            <SelectItem value="OTHER">Khác (Other)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Chọn ngày sinh chuẩn y tế dd/mm/yyyy */}
-        <Controller
-          name="date_of_birth"
-          control={control}
-          render={({ field }) => (
-            <MedicalDatePicker
-              id="date_of_birth"
-              label="Ngày sinh"
-              value={field.value}
-              onChange={field.onChange}
-              error={errors.date_of_birth?.message as string}
+      {/* Chiều cao & Cân nặng (Kèm Stepper +/- bằng Shadcn Button chuẩn Rule 3) */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="reg-height" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Chiều cao (cm)
+          </Label>
+          <div className="relative">
+            <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              id="reg-height"
+              type="number"
+              step="0.5"
+              placeholder="170"
+              className="pl-9 pr-16 h-11 min-h-[44px] rounded-xl border-slate-200 dark:border-slate-800"
+              {...register("height_cm", { valueAsNumber: true })}
             />
-          )}
-        />
-
-        {/* Chọn giới tính chuẩn Shadcn UI Select (Radix UI) */}
-        <Controller
-          name="gender"
-          control={control}
-          render={({ field }) => (
-            <div className="space-y-1.5">
-              <Label htmlFor="gender" className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Giới tính sinh học
-              </Label>
-              <Select value={field.value || ""} onValueChange={field.onChange}>
-                <SelectTrigger id="gender">
-                  <SelectValue placeholder="Chọn giới tính sinh học" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MALE">Nam giới</SelectItem>
-                  <SelectItem value="FEMALE">Nữ giới</SelectItem>
-                  <SelectItem value="OTHER">Khác</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.gender?.message && (
-                <p className="text-[11px] text-rose-500 font-medium">
-                  {String(errors.gender.message)}
-                </p>
-              )}
+            {/* Stepper Buttons */}
+            <div className="flex items-center gap-0.5 absolute right-1 top-1/2 -translate-y-1/2 z-20">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  adjustValue("height_cm", -1, 40, 250, 170);
+                }}
+                className="h-8 w-7 text-slate-500 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg cursor-pointer transition-colors"
+                aria-label="Giảm chiều cao"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  adjustValue("height_cm", 1, 40, 250, 170);
+                }}
+                className="h-8 w-7 text-slate-500 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg cursor-pointer transition-colors"
+                aria-label="Tăng chiều cao"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
             </div>
+          </div>
+          {errors.height_cm && (
+            <p className="text-xs text-rose-500 font-medium">{errors.height_cm.message}</p>
           )}
-        />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="reg-weight" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Cân nặng (kg)
+          </Label>
+          <div className="relative">
+            <Weight className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              id="reg-weight"
+              type="number"
+              step="0.5"
+              placeholder="65"
+              className="pl-9 pr-16 h-11 min-h-[44px] rounded-xl border-slate-200 dark:border-slate-800"
+              {...register("weight_kg", { valueAsNumber: true })}
+            />
+            {/* Stepper Buttons */}
+            <div className="flex items-center gap-0.5 absolute right-1 top-1/2 -translate-y-1/2 z-20">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  adjustValue("weight_kg", -1, 15, 300, 65);
+                }}
+                className="h-8 w-7 text-slate-500 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg cursor-pointer transition-colors"
+                aria-label="Giảm cân nặng"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  adjustValue("weight_kg", 1, 15, 300, 65);
+                }}
+                className="h-8 w-7 text-slate-500 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg cursor-pointer transition-colors"
+                aria-label="Tăng cân nặng"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+          {errors.weight_kg && (
+            <p className="text-xs text-rose-500 font-medium">{errors.weight_kg.message}</p>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Tăng giảm chiều cao có nút +/- chuẩn Stepper */}
-        <Controller
-          name="height_cm"
-          control={control}
-          render={({ field }) => (
-            <NumberStepperInput
-              id="height_cm"
-              label="Chiều cao"
-              unit="cm"
-              min={50}
-              max={250}
-              step={0.5}
-              icon={Ruler}
-              placeholder="168"
-              value={field.value}
-              onChange={field.onChange}
-              error={errors.height_cm?.message as string}
-            />
-          )}
-        />
-
-        {/* Tăng giảm cân nặng có nút +/- chuẩn Stepper */}
-        <Controller
-          name="weight_kg"
-          control={control}
-          render={({ field }) => (
-            <NumberStepperInput
-              id="weight_kg"
-              label="Cân nặng"
-              unit="kg"
-              min={20}
-              max={300}
-              step={0.5}
-              icon={Weight}
-              placeholder="62"
-              value={field.value}
-              onChange={field.onChange}
-              error={errors.weight_kg?.message as string}
-            />
-          )}
-        />
+      {/* Ghi chú y tế hỗ trợ người dùng */}
+      <div className="rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900/50 p-3 text-xs text-teal-800 dark:text-teal-300 leading-relaxed flex items-start gap-2.5">
+        <Info className="h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+        <p className="text-[11px] leading-relaxed">
+          Chỉ số thể chất giúp tự động tính <strong>BMI</strong> phục vụ sàng lọc nguy cơ Đái tháo đường & Tim mạch. Bạn có thể bổ sung sau khi bắt đầu khảo sát.
+        </p>
       </div>
-
-      {/* Thẻ tính BMI theo chuẩn WPRO y tế */}
-      {heightNum && weightNum && heightNum > 0 && weightNum > 0 && (
-        <BMICalculatorCard heightCm={heightNum} weightKg={weightNum} className="mt-2" />
-      )}
     </div>
   );
 }
