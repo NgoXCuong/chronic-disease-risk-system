@@ -210,3 +210,18 @@ async def test_authenticated_screening_and_history_lifecycle():
         # User B thử xem bản ghi khảo sát của User A -> Phải bị chặn 404
         res_unauthorized = await client.get(f"/api/v1/screening/history/{record_id_1}", headers=headers_b)
         assert res_unauthorized.status_code == 404
+
+        # 8. Kiểm tra Xuất báo cáo y tế ra tệp PDF (FR-16)
+        # User A xuất PDF của chính mình -> Thành công 200 OK
+        res_pdf = await client.get(f"/api/v1/screening/history/{record_id_1}/pdf", headers=headers_a)
+        assert res_pdf.status_code == 200
+        assert res_pdf.headers["content-type"] == "application/pdf"
+        assert f"phieu-sang-loc-{record_id_1}.pdf" in res_pdf.headers.get("content-disposition", "")
+        # File PDF hợp lệ luôn bắt đầu bằng magic header %PDF-
+        assert res_pdf.content.startswith(b"%PDF-")
+        assert len(res_pdf.content) > 1000
+
+        # User B thử tải PDF của User A -> Phải bị chặn 404 (Row-level Security)
+        res_pdf_unauth = await client.get(f"/api/v1/screening/history/{record_id_1}/pdf", headers=headers_b)
+        assert res_pdf_unauth.status_code == 404
+

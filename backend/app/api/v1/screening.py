@@ -4,13 +4,17 @@ Hỗ trợ cả sàng lọc từng bệnh lý, sàng lọc toàn diện đa bệ
 """
 import uuid
 from typing import Annotated, Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_async_db
 from app.core.model_loader import ModelRegistry
 from app.core.security import get_current_user, get_optional_current_user
 from app.models.enums import DiseaseType, RecordType
+from app.models.profile import PatientProfile
+from app.models.record import HealthRecord
 from app.models.user import User
 from app.schemas.record import (
     HealthRecordResponse,
@@ -24,6 +28,7 @@ from app.schemas.screening import (
     LoadedModelSummary,
 )
 from app.services.ml_service import MLService, DISEASE_NAME_VI_MAP
+from app.services.pdf_service import PDFReportService
 from app.services.record_service import RecordService
 
 router = APIRouter(prefix="/screening", tags=["3. Sàng lọc & Đánh giá Nguy cơ (Screening & AI Engine)"])
@@ -229,3 +234,51 @@ async def get_disease_risk_trajectory(
         user_id=current_user.id,
         disease_type=disease_name,
     )
+
+
+@router.get(
+    "/history/{record_id}/pdf",
+    summary="Xuất phiếu kết quả sàng lọc ra định dạng PDF (FR-16)",
+    description="Tải về tệp PDF chuẩn y khoa của một lần khám cụ thể để lưu trữ hoặc tham vấn bác sĩ chuyên khoa.",
+)
+async def export_screening_pdf(
+    record_id: uuid.UUID,
+    current_user: CurrentUser,
+    db: DatabaseSession,
+):
+    # 1. Truy vấn hồ sơ sàng lọc kèm danh sách kết quả (Row-Level Security)
+    record_query = (
+        select(HealthRecord)
+        .options(selectinload(HealthRecord.screening_results))
+        .where(HealthRecord.id == record_id, HealthRecord.user_id == current_user.id)
+    )
+    res = await db.execute(record_query)
+    record = res.scalar_one_or_none()
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Không tìm thấy hồ sơ khảo sát sức khỏe hoặc bạn không có quyền truy cập.",
+        )
+
+    # 2. Truy vấn thông tin nhân trắc học người dùng
+    prof_res = await db.execute(select(PatientProfile).where(PatientProfile.user_id == current_user.id))
+    profile = prof_res.scalar_one_or_none()
+
+    # 3. Tạo tệp PDF chuẩn y khoa
+    pdf_bytes = PDFReportService.generate_screening_report_pdf(
+        record=record,
+        user=current_user,
+        profile=profile,
+    )
+
+    filename = f"phieu-sang-loc-{record_id}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
+    )
+

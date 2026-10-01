@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
   Bot,
   MapPin,
+  History,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,10 @@ export function Navbar() {
     { href: "/facilities", label: "Cơ sở Y tế", icon: MapPin },
     { href: "/chat", label: "Trợ lý AI", icon: Bot },
     ...(isAuthenticated
-      ? [{ href: "/dashboard", label: "Bảng điều khiển", icon: LayoutDashboard }]
+      ? [
+          { href: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
+          { href: "/history", label: "Lịch sử & Diễn tiến", icon: History },
+        ]
       : []),
   ];
 
@@ -127,6 +131,12 @@ export function Navbar() {
                       <Link href="/dashboard" className="flex items-center gap-2 text-xs font-medium py-2">
                         <LayoutDashboard className="h-4 w-4 text-teal-600" />
                         Bảng điều khiển sức khỏe
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                      <Link href="/history" className="flex items-center gap-2 text-xs font-medium py-2">
+                        <History className="h-4 w-4 text-teal-600" />
+                        Lịch sử & Diễn tiến nguy cơ
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer">

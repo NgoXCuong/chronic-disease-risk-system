@@ -131,3 +131,31 @@ export interface RiskTrajectoryResponse {
   trajectory: RiskTrajectoryPoint[];
 }
 
+export interface ScreeningResultDetail {
+  id: string;
+  health_record_id: string;
+  disease_type: string;
+  disease_name_vi: string;
+  model_version: string;
+  risk_score: number;
+  risk_percentage: number;
+  risk_level: RiskLevel;
+  optimal_threshold: number;
+  is_above_threshold: boolean;
+  top_risk_factors: RiskFactor[];
+  recommendations: string[];
+  shap_summary?: Record<string, number>;
+  created_at: string;
+}
+
+export interface HealthRecordDetailResponse {
+  id: string;
+  user_id: string;
+  record_type: string;
+  input_data: Record<string, any>;
+  notes?: string | null;
+  created_at: string;
+  screening_results: ScreeningResultDetail[];
+}
+
+

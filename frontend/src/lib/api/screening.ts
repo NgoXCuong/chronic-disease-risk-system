@@ -6,6 +6,7 @@ import {
   ComprehensiveScreeningResponse,
   ScreeningHistoryResponse,
   RiskTrajectoryResponse,
+  HealthRecordDetailResponse,
 } from "@/types/screening";
 
 // Bộ đệm RAM (In-Memory Cache) và chống gọi trùng lặp (Request Deduplication) cho danh sách mô hình AI
@@ -70,15 +71,15 @@ export const screeningApi = {
   },
 
   /**
-   * Lấy chi tiết một đợt sàng lọc kèm giá trị TreeSHAP và khuyến nghị lâm sàng
+   * Lấy chi tiết một đợt sàng lọc kèm giá trị TreeSHAP và khuyến nghị lâm sàng (FR-12, FR-13)
    */
-  async getHistoryById(recordId: string): Promise<any> {
-    const res = await client.get(`/screening/history/${recordId}`);
+  async getHistoryById(recordId: string): Promise<HealthRecordDetailResponse> {
+    const res = await client.get<HealthRecordDetailResponse>(`/screening/history/${recordId}`);
     return res.data;
   },
 
   /**
-   * Lấy chuỗi thời gian diễn tiến nguy cơ của một bệnh lý
+   * Lấy chuỗi thời gian diễn tiến nguy cơ của một bệnh lý (FR-14, FR-15)
    */
   async getTrajectory(diseaseName: string): Promise<RiskTrajectoryResponse> {
     const res = await client.get<RiskTrajectoryResponse>(
@@ -86,6 +87,32 @@ export const screeningApi = {
     );
     return res.data;
   },
+
+  /**
+   * Tải tệp PDF kết quả sàng lọc y tế (FR-16)
+   */
+  async exportPdf(recordId: string): Promise<Blob> {
+    const res = await client.get(`/screening/history/${recordId}/pdf`, {
+      responseType: "blob",
+    });
+    return res.data;
+  },
+
+  /**
+   * Tiện ích tải trực tiếp tệp PDF về máy người dùng
+   */
+  async downloadScreeningPdf(recordId: string, customName?: string): Promise<void> {
+    const blob = await this.exportPdf(recordId);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = customName || `phieu-sang-loc-${recordId.slice(0, 8)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
 };
 
 export default screeningApi;
+
