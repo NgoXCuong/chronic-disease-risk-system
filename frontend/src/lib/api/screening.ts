@@ -4,6 +4,8 @@ import {
   LifestyleScreeningPayload,
   ClinicalDiabetesPayload,
   ComprehensiveScreeningResponse,
+  ScreeningHistoryResponse,
+  RiskTrajectoryResponse,
 } from "@/types/screening";
 
 // Bộ đệm RAM (In-Memory Cache) và chống gọi trùng lặp (Request Deduplication) cho danh sách mô hình AI
@@ -60,8 +62,10 @@ export const screeningApi = {
   /**
    * Lấy danh sách lịch sử sàng lọc phân trang
    */
-  async getHistory(page = 1, pageSize = 5): Promise<any> {
-    const res = await client.get(`/screening/history?page=${page}&page_size=${pageSize}`);
+  async getHistory(page = 1, pageSize = 5): Promise<ScreeningHistoryResponse> {
+    const res = await client.get<ScreeningHistoryResponse>(
+      `/screening/history?page=${page}&page_size=${pageSize}`
+    );
     return res.data;
   },
 
@@ -70,6 +74,16 @@ export const screeningApi = {
    */
   async getHistoryById(recordId: string): Promise<any> {
     const res = await client.get(`/screening/history/${recordId}`);
+    return res.data;
+  },
+
+  /**
+   * Lấy chuỗi thời gian diễn tiến nguy cơ của một bệnh lý
+   */
+  async getTrajectory(diseaseName: string): Promise<RiskTrajectoryResponse> {
+    const res = await client.get<RiskTrajectoryResponse>(
+      `/screening/trajectory/${diseaseName}`
+    );
     return res.data;
   },
 };

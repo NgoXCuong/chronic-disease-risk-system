@@ -78,3 +78,53 @@ export const INCOME_OPTIONS = [
   { value: 7, label: "50 - 75 triệu VNĐ" },
   { value: 8, label: "Trên 75 triệu VNĐ" },
 ];
+
+/**
+ * Đánh giá thể trạng theo tiêu chuẩn WHO khu vực Tây Thái Bình Dương (WPRO / IDI cho người châu Á)
+ */
+export function getAsianBmiCategory(bmi: number) {
+  if (bmi < 18.5) {
+    return {
+      label: "Thiếu cân",
+      level: "UNDERWEIGHT",
+      color: "text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
+      description: "Nguy cơ suy dinh dưỡng và giảm đề kháng",
+    };
+  }
+  if (bmi < 23.0) {
+    return {
+      label: "Thể trạng Lý tưởng",
+      level: "NORMAL",
+      color: "text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
+      description: "Cân đối, nguy cơ chuyển hóa thấp",
+    };
+  }
+  if (bmi < 25.0) {
+    return {
+      label: "Thừa cân (Tiền béo phì)",
+      level: "OVERWEIGHT",
+      color: "text-amber-800 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+      description: "Gia tăng nguy cơ đái tháo đường & tim mạch",
+    };
+  }
+  if (bmi < 30.0) {
+    return {
+      label: "Béo phì độ I",
+      level: "OBESE_I",
+      color: "text-rose-700 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800",
+      description: "Nguy cơ cao mắc bệnh mạn tính chuyển hóa",
+    };
+  }
+  return {
+    label: "Béo phì độ II (Rất cao)",
+    level: "OBESE_II",
+    color: "text-rose-800 bg-rose-100 border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-700",
+    description: "Cần can thiệp y khoa và điều chỉnh lối sống",
+  };
+}
+
+export function calculateBmi(heightCm?: number | null, weightKg?: number | null): number {
+  if (!heightCm || !weightKg || heightCm <= 0 || weightKg <= 0) return 22.0;
+  const heightM = heightCm / 100;
+  return Number((weightKg / (heightM * heightM)).toFixed(1));
+}

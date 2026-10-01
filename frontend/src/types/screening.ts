@@ -81,3 +81,50 @@ export interface ClinicalDiabetesPayload {
 
 export type ComprehensiveScreeningResponse = Record<string, DiseasePrediction>;
 
+export interface ScreeningHistoryDiseaseSummary {
+  disease: string;
+  risk_level: RiskLevel;
+  score: number;
+}
+
+export interface ScreeningHistoryItem {
+  record_id: string;
+  record_type: string;
+  created_at: string;
+  notes?: string | null;
+  diseases_count: number;
+  highest_risk_level: RiskLevel;
+  highest_risk_score: number;
+  screened_diseases: ScreeningHistoryDiseaseSummary[];
+}
+
+export interface ScreeningHistoryResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  items: ScreeningHistoryItem[];
+}
+
+export interface RiskTrajectoryPoint {
+  record_id: string;
+  screening_result_id: string;
+  recorded_at: string;
+  risk_score: number;
+  risk_percentage: number;
+  risk_level: RiskLevel;
+  optimal_threshold: number;
+  is_above_threshold: boolean;
+  delta_risk?: number | null;
+  trend_status?: string | null;
+}
+
+export interface RiskTrajectoryResponse {
+  disease_type: string;
+  disease_name_vi: string;
+  total_evaluations: number;
+  optimal_threshold: number;
+  overall_trend: string;
+  trajectory: RiskTrajectoryPoint[];
+}
+
