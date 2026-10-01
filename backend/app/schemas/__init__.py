@@ -28,6 +28,14 @@ from app.schemas.record import (
     RiskTrajectoryResponse,
 )
 
+from app.schemas.facility import (
+    MedicalFacilityBase,
+    MedicalFacilityCreate,
+    MedicalFacilityResponse,
+    NearbyFacilityItem,
+    NearbyFacilitiesResponse,
+)
+
 __all__ = [
     "UserRegisterRequest",
     "UserLoginRequest",
@@ -50,5 +58,10 @@ __all__ = [
     "ScreeningHistoryResponse",
     "RiskTrajectoryPoint",
     "RiskTrajectoryResponse",
+    "MedicalFacilityBase",
+    "MedicalFacilityCreate",
+    "MedicalFacilityResponse",
+    "NearbyFacilityItem",
+    "NearbyFacilitiesResponse",
 ]
 
